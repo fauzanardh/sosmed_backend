@@ -5,7 +5,10 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 
 const indexRouter = require('./routes/index');
-const testApiRouter = require('./routes/testApi')
+const testApiRouter = require('./routes/testApi');
+
+// Set PORT explicitly for now, later will use .env file
+process.env.PORT = "8001";
 
 const app = express();
 
