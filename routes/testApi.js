@@ -30,7 +30,7 @@ router.get('/test', (req, res) => {
     });
 });
 
-router.get('/test/create_tables', (req, res) => {
+router.get('/test/create_table', (req, res) => {
     dbConnection.createTestTable()
         .then(r => {
             res.json({
@@ -52,34 +52,27 @@ router.get('/test/create_tables', (req, res) => {
         });
 });
 
-router.get('/test/drop_tables', (req, res) => {
+router.get('/test/drop_table', (req, res) => {
     dbConnection.dropTestTable()
         .then((_) => {
-            // Trying to use scan stream to delete all of the keys inside redis when you drop all the tables
-            // const stream = rClient.client.scanStream({match: 'table_test_id_*'});
-            // const pipeline = rClient.client.pipeline();
-            // const deleted_key = [];
-            // stream.on('data', (resultKeys) => {
-            //     resultKeys.forEach((r) => {
-            //         pipeline.del(r);
-            //         deleted_key.push(r);
-            //     });
-            // });
-            // stream.on('end', () => {
-            //     res.json({
-            //         error_code: status.api_error_code.no_error,
-            //         message: "Tables dropped!",
-            //         data: {
-            //             redis: {
-            //                 deleted_key: deleted_key,
-            //             }
-            //         },
-            //     });
-            // });
-            res.json({
-                error_code: status.api_error_code.no_error,
-                message: "Tables dropped!",
-                data: {},
+            const stream = rClient.client.scanStream({match: 'table_test_id_*'});
+            const deleted_key = [];
+            stream.on('data', (resultKeys) => {
+                resultKeys.forEach((r) => {
+                    rClient.client.del(r);
+                    deleted_key.push(r);
+                });
+            });
+            stream.on('end', () => {
+                res.json({
+                    error_code: status.api_error_code.no_error,
+                    message: "Tables dropped!",
+                    data: {
+                        redis: {
+                            deleted_key: deleted_key,
+                        }
+                    },
+                });
             });
         })
         .catch((err) => {
