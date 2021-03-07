@@ -3,6 +3,7 @@ const api_error_code = {
     no_params: 1,
     sql_error: 2,
     redis_error: 3,
+    http_error: 4,
 };
 
 const postgres_error_codes = {

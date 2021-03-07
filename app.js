@@ -6,6 +6,7 @@ const logger = require('morgan');
 
 const indexRouter = require('./routes/index');
 const testApiRouter = require('./routes/testApi');
+const tableTestApiRouter = require('./routes/tableTestApi')
 
 const app = express();
 
@@ -20,7 +21,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api', indexRouter);
-app.use('/api/v1', testApiRouter);
+app.use('/api/v1', indexRouter);
+app.use('/api/v1/test', testApiRouter);
+app.use('/api/v1/table_test', tableTestApiRouter);
 
 // app.use(function(req, res, next) {
 //   res.header("Access-Control-Allow-Origin", "localhost");

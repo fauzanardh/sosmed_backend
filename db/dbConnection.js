@@ -1,9 +1,6 @@
-const dbPool = require("./dbPool");
 const dbQuery = require("./dbQuery");
 
-dbPool.pool.on('connect', () => {
-    console.log("Connected to the DB!")
-});
+// TODO: delete this file, it's useless
 
 const createTestTable = () => {
     const createTestQuery = `CREATE TABLE IF NOT EXISTS test
@@ -35,10 +32,6 @@ const dropTestTable = () => {
             });
     });
 };
-
-dbPool.pool.on('remove', () => {
-    console.log("Client removed!")
-});
 
 module.exports = {
     createTestTable,
