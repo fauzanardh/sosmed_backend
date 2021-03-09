@@ -10,14 +10,14 @@ status => Will give detailed status of the error, otherwise success.
 data => Data that will be given, there's no structure particular for the data given
 */
 // Retrieve all tests
-router.get('/', testController.getAll);
+router.get('/', testController.getTests);
 // Retrieve a single test with id
-router.get('/:id', testController.getOne);
+router.get('/:id', testController.getTestById);
 // Create a new test
 // post body => {"name":"<test name>", "description":"<test description>"}
-router.post('/', testController.create);
+router.post('/', testController.createTest);
 // Update a test with id
-router.patch('/:id', testController.update_patch)
-router.put('/:id', testController.update_put)
+router.put('/:id', testController.updatePutTest)
+router.patch('/:id', testController.updatePatchTest)
 
 module.exports = router;

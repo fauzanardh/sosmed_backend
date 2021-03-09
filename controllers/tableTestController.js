@@ -1,10 +1,15 @@
 const status = require('../const/status');
 const rClient = require('../redis/rClient');
-const dbConnection = require('../db/dbConnection');
+const dbQuery = require("../db/dbQuery");
 
 // Used to create a new test table
 const create = (req, res) => {
-    dbConnection.createTestTable()
+    const createTestQuery = `CREATE TABLE IF NOT EXISTS test
+    (id SERIAL PRIMARY KEY,
+    name VARCHAR(64) UNIQUE NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    created_on DATE NOT NULL)`;
+    dbQuery.query(createTestQuery)
         .then((r) => {
             res.json({
                 error_code: status.api_error_code.no_error,
@@ -27,10 +32,9 @@ const create = (req, res) => {
 
 // Used to drop the current test table
 const drop = (req, res) => {
-    dbConnection.dropTestTable()
+    const dropTestQuery = 'DROP TABLE IF EXISTS test';
+    dbQuery.query(dropTestQuery)
         .then((_) => {
-            // Creating a new scanStream to retrieve all keys that match the search_string
-            // the results of that will be used to delete all of the matching keys stored inside the cache
             const stream = rClient.client.scanStream({match: 'table_test_id_*'});
             const deleted_key = [];
             stream.on('data', (resultKeys) => {
@@ -51,12 +55,12 @@ const drop = (req, res) => {
                 });
             });
         })
-        .catch((err) => {
+        .catch((e) => {
             res.status(status.http_status.error).json({
                 error_code: status.api_error_code.sql_error,
                 message: "Failed dropping the tables!",
                 data: {
-                    detail: err.detail,
+                    detail: e.detail,
                 },
             });
         });

@@ -43,7 +43,7 @@ const updateTestGetOneRedis = (test_id) => {
 }
 
 // Used to get all of the columns from the table
-const getAll = (req, res) => {
+const getTests = (req, res) => {
     const key = "table_test_id_all";
     rClient.get(key)
         .then((r) => {
@@ -92,7 +92,7 @@ const getAll = (req, res) => {
 };
 
 // Used to get one column from the table based on the column id
-const getOne = (req, res) => {
+const getTestById = (req, res) => {
     const key = `table_test_id_${req.params.id}`;
     rClient.get(key)
         .then((r) => {
@@ -155,7 +155,7 @@ const getOne = (req, res) => {
 };
 
 // Used to create a new column
-const create = (req, res) => {
+const createTest = (req, res) => {
     if (req.body.name && req.body.description) {
         const addTestQuery = `INSERT INTO
         test(name, description, created_on)
@@ -217,7 +217,7 @@ const create = (req, res) => {
 };
 
 // Used to update the column using 'PUT' http method
-const update_put = (req, res) => {
+const updatePutTest = (req, res) => {
     if (req.params.id && req.body.name && req.body.description) {
         const updateTestQuery = `UPDATE test
         SET name = $1, description = $2
@@ -231,28 +231,19 @@ const update_put = (req, res) => {
             .then((_) => {
                 updateTestGetAllRedis()
                     .then((_) => {
-                        updateTestGetOneRedis(req.params.id)
-                            .then((_) => {
-                                res.json({
-                                    error_code: status.api_error_code.no_error,
-                                    message: "Successfully updated the test.",
-                                    data: {},
-                                });
-                            })
-                            .catch((e) => {
-                                res.status(status.http_status.error).json({
-                                    error_code: status.api_error_code.redis_error,
-                                    message: "Redis went AWOL when updating the entry cache.",
-                                    data: {
-                                        return_value: e,
-                                    }
-                                });
-                            });
+                        return updateTestGetOneRedis(req.params.id)
+                    })
+                    .then((_) => {
+                        res.json({
+                            error_code: status.api_error_code.no_error,
+                            message: "Successfully updated the test.",
+                            data: {},
+                        });
                     })
                     .catch((e) => {
                         res.status(status.http_status.error).json({
                             error_code: status.api_error_code.redis_error,
-                            message: "Redis went AWOL when updating the table cache.",
+                            message: "Redis went AWOL",
                             data: {
                                 return_value: e,
                             }
@@ -284,7 +275,7 @@ const update_put = (req, res) => {
 };
 
 // Used to update the column using 'PATCH' http method
-const update_patch = (req, res) => {
+const updatePatchTest = (req, res) => {
     if (req.params.id && (req.body.name || req.body.description)) {
         let updateTestQuery;
         let warning;
@@ -314,30 +305,21 @@ const update_patch = (req, res) => {
             .then((_) => {
                 updateTestGetAllRedis()
                     .then((_) => {
-                        updateTestGetOneRedis(req.params.id)
-                            .then((_) => {
-                                res.json({
-                                    error_code: status.api_error_code.no_error,
-                                    message: "Successfully updated the test.",
-                                    data: {
-                                        warning: warning,
-                                    },
-                                });
-                            })
-                            .catch((e) => {
-                                res.status(status.http_status.error).json({
-                                    error_code: status.api_error_code.redis_error,
-                                    message: "Redis went AWOL when updating the entry cache.",
-                                    data: {
-                                        return_value: e,
-                                    }
-                                });
-                            });
+                        return updateTestGetOneRedis(req.params.id)
+                    })
+                    .then((_) => {
+                        res.json({
+                            error_code: status.api_error_code.no_error,
+                            message: "Successfully updated the test.",
+                            data: {
+                                warning: warning,
+                            },
+                        });
                     })
                     .catch((e) => {
                         res.status(status.http_status.error).json({
                             error_code: status.api_error_code.redis_error,
-                            message: "Redis went AWOL when updating the table cache.",
+                            message: "Redis went AWOL.",
                             data: {
                                 return_value: e,
                             }
@@ -369,9 +351,9 @@ const update_patch = (req, res) => {
 };
 
 module.exports = {
-    getAll,
-    getOne,
-    create,
-    update_patch,
-    update_put
+    getTests,
+    getTestById,
+    createTest,
+    updatePutTest,
+    updatePatchTest
 }
