@@ -18,6 +18,8 @@ RUN npm install --silent
 
 # add app
 COPY . ./
+RUN ls
+RUN npm run build
 
 RUN dos2unix /app/entrypoint.sh
 RUN chmod +x "/app/entrypoint.sh"
