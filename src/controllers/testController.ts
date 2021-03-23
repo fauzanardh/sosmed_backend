@@ -1,8 +1,10 @@
-const moment = require('moment');
+import moment from 'moment';
 
-const status = require('../const/status');
-const dbQuery = require('../db/dbQuery');
-const rClient = require('../redis/rClient');
+import {api_error_code, http_status, postgres_error_codes} from '../const/status'
+import rClient from '../redis/rClient'
+import { RedisJobs } from '../redis/rClient'
+import { query } from '../db/dbQuery'
+import { Request, Response } from "express";
 
 // This functions is a helper function to update the redis cache that will be used in `getAll`
 // returns a promise object
@@ -10,8 +12,8 @@ const updateTestGetAllRedis = () => {
     const key = "table_test_id_all";
     const getTestQuery = `SELECT * FROM test`;
     return new Promise((resolve, reject) => {
-        dbQuery.query(getTestQuery)
-            .then((r) => {
+        query(getTestQuery, null)
+            .then((r: any) => {
                 rClient.client.set(key, JSON.stringify(r.rows), "EX", 600);
                 resolve(r);
             })
@@ -24,15 +26,15 @@ const updateTestGetAllRedis = () => {
 // This functions is a helper function to update the redis cache that will be used in `getOne`
 // it only updates one key that's provided by the argument
 // returns a promise object
-const updateTestGetOneRedis = (test_id) => {
+const updateTestGetOneRedis = (test_id: string) => {
     const key = `table_test_id_${test_id}`;
     const getTestQuery = `SELECT * FROM test WHERE id = $1`;
     const values = [
         test_id
     ];
     return new Promise((resolve, reject) => {
-        dbQuery.query(getTestQuery, values)
-            .then((r) => {
+        query(getTestQuery, values)
+            .then((r: any) => {
                 rClient.client.set(key, JSON.stringify(r.rows), "EX", 600);
                 resolve(r);
             })
@@ -43,13 +45,13 @@ const updateTestGetOneRedis = (test_id) => {
 }
 
 // Used to get all of the columns from the table
-const getTests = (req, res) => {
+export const getTests = (req: Request, res: Response) => {
     const key = "table_test_id_all";
     rClient.get(key)
-        .then((r) => {
+        .then((r: RedisJobs) => {
             if (r.using_cache) {
                 res.json({
-                    error_code: status.api_error_code.no_error,
+                    error_code: api_error_code.no_error,
                     message: "Successfully getting the tests with redis.",
                     data: {
                         tests: JSON.parse(r.jobs),
@@ -57,11 +59,11 @@ const getTests = (req, res) => {
                 });
             } else {
                 const getTestQuery = `SELECT * FROM test`;
-                dbQuery.query(getTestQuery)
-                    .then((r) => {
+                query(getTestQuery, null)
+                    .then((r: any) => {
                         rClient.client.set(key, JSON.stringify(r.rows), "EX", 600);
                         res.json({
-                            error_code: status.api_error_code.no_error,
+                            error_code: api_error_code.no_error,
                             message: "Successfully getting the test.",
                             data: {
                                 tests: r.rows,
@@ -69,20 +71,20 @@ const getTests = (req, res) => {
                         });
                     })
                     .catch((e) => {
-                        res.status(status.http_status.error).json({
-                            error_code: status.api_error_code.sql_error,
+                        res.status(http_status.error).json({
+                            error_code: api_error_code.sql_error,
                             message: "Failed to get the test.",
                             data: {
                                 severity: e.severity,
-                                detail: status.postgres_error_codes[e.code],
+                                detail: postgres_error_codes[e.code],
                             },
                         });
                     });
             }
         })
         .catch((e) => {
-            res.status(status.http_status.error).json({
-                error_code: status.api_error_code.redis_error,
+            res.status(http_status.error).json({
+                error_code: api_error_code.redis_error,
                 message: "Redis went AWOL when retrieving the entry.",
                 data: {
                     return_value: e,
@@ -92,13 +94,13 @@ const getTests = (req, res) => {
 };
 
 // Used to get one column from the table based on the column id
-const getTestById = (req, res) => {
+export const getTestById = (req: Request, res: Response) => {
     const key = `table_test_id_${req.params.id}`;
     rClient.get(key)
-        .then((r) => {
+        .then((r: RedisJobs) => {
             if (r.using_cache) {
                 res.json({
-                    error_code: status.api_error_code.no_error,
+                    error_code: api_error_code.no_error,
                     message: "Successfully getting the test with redis.",
                     data: {
                         tests: JSON.parse(r.jobs),
@@ -109,11 +111,11 @@ const getTestById = (req, res) => {
                 const values = [
                     req.params.id
                 ];
-                dbQuery.query(getTestQuery, values)
-                    .then((r) => {
+                query(getTestQuery, values)
+                    .then((r: any) => {
                         if (r.rows.length === 0) {
-                            res.status(status.http_status.error).json({
-                                error_code: status.api_error_code.sql_error,
+                            res.status(http_status.error).json({
+                                error_code: api_error_code.sql_error,
                                 message: "Failed to get the test.",
                                 data: {
                                     severity: "NOT_FOUND",
@@ -123,7 +125,7 @@ const getTestById = (req, res) => {
                         } else {
                             rClient.client.set(key, JSON.stringify(r.rows), "EX", 600);
                             res.json({
-                                error_code: status.api_error_code.no_error,
+                                error_code: api_error_code.no_error,
                                 message: "Successfully getting the test.",
                                 data: {
                                     tests: r.rows,
@@ -132,20 +134,20 @@ const getTestById = (req, res) => {
                         }
                     })
                     .catch((e) => {
-                        res.status(status.http_status.error).json({
-                            error_code: status.api_error_code.sql_error,
+                        res.status(http_status.error).json({
+                            error_code: api_error_code.sql_error,
                             message: "Failed to get the test.",
                             data: {
                                 severity: e.severity,
-                                detail: status.postgres_error_codes[e.code],
+                                detail: postgres_error_codes[e.code],
                             },
                         });
                     });
             }
         })
         .catch((e) => {
-            res.status(status.http_status.error).json({
-                error_code: status.api_error_code.redis_error,
+            res.status(http_status.error).json({
+                error_code: api_error_code.redis_error,
                 message: "Redis went AWOL when retrieving the entry.",
                 data: {
                     return_value: e,
@@ -155,7 +157,7 @@ const getTestById = (req, res) => {
 };
 
 // Used to create a new column
-const createTest = (req, res) => {
+export const createTest = (req: Request, res: Response) => {
     if (req.body.name && req.body.description) {
         const addTestQuery = `INSERT INTO
         test(name, description, created_on)
@@ -166,14 +168,14 @@ const createTest = (req, res) => {
             req.body.description,
             moment(new Date()),
         ];
-        dbQuery.query(addTestQuery, values)
-            .then((r) => {
+        query(addTestQuery, values)
+            .then((r: any) => {
                 updateTestGetAllRedis()
                     .then((_) => {
                         const key = `table_test_id_${r.rows[0].id}`;
                         rClient.client.set(key, JSON.stringify(r.rows), "EX", 600);
                         res.json({
-                            error_code: status.api_error_code.no_error,
+                            error_code: api_error_code.no_error,
                             message: "Successfully added a new test.",
                             data: {
                                 id: r.rows[0].id,
@@ -184,8 +186,8 @@ const createTest = (req, res) => {
                         });
                     })
                     .catch((e) => {
-                        res.status(status.http_status.error).json({
-                            error_code: status.api_error_code.redis_error,
+                        res.status(http_status.error).json({
+                            error_code: api_error_code.redis_error,
                             message: "Redis went AWOL when updating the table cache.",
                             data: {
                                 return_value: e,
@@ -195,18 +197,18 @@ const createTest = (req, res) => {
             })
             .catch((e) => {
                 console.log(e);
-                res.status(status.http_status.error).json({
-                    error_code: status.api_error_code.sql_error,
+                res.status(http_status.error).json({
+                    error_code: api_error_code.sql_error,
                     message: "Failed to add a new test.",
                     data: {
                         severity: e.severity,
-                        detail: status.postgres_error_codes[e.code] || e.detail,
+                        detail: postgres_error_codes[e.code] || e.detail,
                     },
                 });
             });
     } else {
-        res.status(status.http_status.error).json({
-            error_code: status.api_error_code.no_params,
+        res.status(http_status.error).json({
+            error_code: api_error_code.no_params,
             message: "Fix the params!",
             data: {
                 name: req.body.name ? "exists" : "not found",
@@ -217,7 +219,7 @@ const createTest = (req, res) => {
 };
 
 // Used to update the column using 'PUT' http method
-const updatePutTest = (req, res) => {
+export const updatePutTest = (req: Request, res: Response) => {
     if (req.params.id && req.body.name && req.body.description) {
         const updateTestQuery = `UPDATE test
         SET name = $1, description = $2
@@ -227,7 +229,7 @@ const updatePutTest = (req, res) => {
             req.body.description,
             req.params.id,
         ];
-        dbQuery.query(updateTestQuery, values)
+        query(updateTestQuery, values)
             .then((_) => {
                 updateTestGetAllRedis()
                     .then((_) => {
@@ -235,14 +237,14 @@ const updatePutTest = (req, res) => {
                     })
                     .then((_) => {
                         res.json({
-                            error_code: status.api_error_code.no_error,
+                            error_code: api_error_code.no_error,
                             message: "Successfully updated the test.",
                             data: {},
                         });
                     })
                     .catch((e) => {
-                        res.status(status.http_status.error).json({
-                            error_code: status.api_error_code.redis_error,
+                        res.status(http_status.error).json({
+                            error_code: api_error_code.redis_error,
                             message: "Redis went AWOL",
                             data: {
                                 return_value: e,
@@ -252,18 +254,18 @@ const updatePutTest = (req, res) => {
             })
             .catch((e) => {
                 console.log(e);
-                res.status(status.http_status.error).json({
-                    error_code: status.api_error_code.sql_error,
+                res.status(http_status.error).json({
+                    error_code: api_error_code.sql_error,
                     message: `Failed to update the test with id ${req.params.id}.`,
                     data: {
                         severity: e.severity,
-                        detail: status.postgres_error_codes[e.code] || e.detail,
+                        detail: postgres_error_codes[e.code] || e.detail,
                     },
                 });
             });
     } else {
-        res.status(status.http_status.error).json({
-            error_code: status.api_error_code.no_params,
+        res.status(http_status.error).json({
+            error_code: api_error_code.no_params,
             message: "Fix the params!",
             data: {
                 id: req.params.id ? "exist": "not found",
@@ -275,7 +277,7 @@ const updatePutTest = (req, res) => {
 };
 
 // Used to update the column using 'PATCH' http method
-const updatePatchTest = (req, res) => {
+export const updatePatchTest = (req: Request, res: Response) => {
     if (req.params.id && (req.body.name || req.body.description)) {
         let updateTestQuery;
         let warning;
@@ -301,7 +303,7 @@ const updatePatchTest = (req, res) => {
             values.push(req.params.id);
             warning = "Consider using PUT when you're supplying the entire entity."
         }
-        dbQuery.query(updateTestQuery, values)
+        query(updateTestQuery, values)
             .then((_) => {
                 updateTestGetAllRedis()
                     .then((_) => {
@@ -309,7 +311,7 @@ const updatePatchTest = (req, res) => {
                     })
                     .then((_) => {
                         res.json({
-                            error_code: status.api_error_code.no_error,
+                            error_code: api_error_code.no_error,
                             message: "Successfully updated the test.",
                             data: {
                                 warning: warning,
@@ -317,8 +319,8 @@ const updatePatchTest = (req, res) => {
                         });
                     })
                     .catch((e) => {
-                        res.status(status.http_status.error).json({
-                            error_code: status.api_error_code.redis_error,
+                        res.status(http_status.error).json({
+                            error_code: api_error_code.redis_error,
                             message: "Redis went AWOL.",
                             data: {
                                 return_value: e,
@@ -328,18 +330,18 @@ const updatePatchTest = (req, res) => {
             })
             .catch((e) => {
                 console.log(e);
-                res.status(status.http_status.error).json({
-                    error_code: status.api_error_code.sql_error,
+                res.status(http_status.error).json({
+                    error_code: api_error_code.sql_error,
                     message: `Failed to update the test with id ${req.params.id}.`,
                     data: {
                         severity: e.severity,
-                        detail: status.postgres_error_codes[e.code] || e.detail,
+                        detail: postgres_error_codes[e.code] || e.detail,
                     },
                 });
             });
     } else {
-        res.status(status.http_status.error).json({
-            error_code: status.api_error_code.no_params,
+        res.status(http_status.error).json({
+            error_code: api_error_code.no_params,
             message: "Fix the params!",
             data: {
                 id: req.params.id ? "exist": "not found",

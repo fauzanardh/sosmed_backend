@@ -1,10 +1,10 @@
-const dbPool = require("./dbPool");
+import { pool } from './dbPool'
 
 // This function is a helper function for retrieving data from the database
 // returns a promise object
-const query = (queryText, params) => {
+export const query = (queryText: string, params: string[] | null) => {
     return new Promise((resolve, reject) => {
-        dbPool.pool.query(queryText, params)
+        pool.query(queryText, params)
             .then((res) => {
                 resolve(res);
             })
@@ -14,6 +14,6 @@ const query = (queryText, params) => {
     });
 };
 
-module.exports = {
+export default {
     query,
 }

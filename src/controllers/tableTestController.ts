@@ -1,18 +1,19 @@
-const status = require('../const/status');
-const rClient = require('../redis/rClient');
-const dbQuery = require("../db/dbQuery");
+import { api_error_code, http_status } from '../const/status'
+import rClient from '../redis/rClient'
+import { query } from '../db/dbQuery'
+import { Request, Response } from "express";
 
 // Used to create a new test table
-const create = (req, res) => {
+export const create = (req: Request, res: Response) => {
     const createTestQuery = `CREATE TABLE IF NOT EXISTS test
     (id SERIAL PRIMARY KEY,
     name VARCHAR(64) UNIQUE NOT NULL,
     description VARCHAR(255) NOT NULL,
     created_on DATE NOT NULL)`;
-    dbQuery.query(createTestQuery)
+    query(createTestQuery, null)
         .then((r) => {
             res.json({
-                error_code: status.api_error_code.no_error,
+                error_code: api_error_code.no_error,
                 message: "Tables created!",
                 data: {
                     return_value: r,
@@ -20,8 +21,8 @@ const create = (req, res) => {
             });
         })
         .catch((e) => {
-            res.status(status.http_status.error).json({
-                error_code: status.api_error_code.sql_error,
+            res.status(http_status.error).json({
+                error_code: api_error_code.sql_error,
                 message: "Failed creating the tables!",
                 data: {
                     return_value: e,
@@ -31,21 +32,21 @@ const create = (req, res) => {
 }
 
 // Used to drop the current test table
-const drop = (req, res) => {
+export const drop = (req: Request, res: Response) => {
     const dropTestQuery = 'DROP TABLE IF EXISTS test';
-    dbQuery.query(dropTestQuery)
+    query(dropTestQuery, null)
         .then((_) => {
             const stream = rClient.client.scanStream({match: 'table_test_id_*'});
-            const deleted_key = [];
+            const deleted_key: string[] = [];
             stream.on('data', (resultKeys) => {
-                resultKeys.forEach((r) => {
+                resultKeys.forEach((r: string) => {
                     rClient.client.del(r);
                     deleted_key.push(r);
                 });
             });
             stream.on('end', () => {
                 res.json({
-                    error_code: status.api_error_code.no_error,
+                    error_code: api_error_code.no_error,
                     message: "Tables dropped!",
                     data: {
                         redis: {
@@ -56,8 +57,8 @@ const drop = (req, res) => {
             });
         })
         .catch((e) => {
-            res.status(status.http_status.error).json({
-                error_code: status.api_error_code.sql_error,
+            res.status(http_status.error).json({
+                error_code: api_error_code.sql_error,
                 message: "Failed dropping the tables!",
                 data: {
                     detail: e.detail,
@@ -66,7 +67,7 @@ const drop = (req, res) => {
         });
 }
 
-module.exports = {
+export default {
     create,
     drop,
 }

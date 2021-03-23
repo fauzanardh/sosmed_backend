@@ -1,7 +1,8 @@
-const express = require('express');
-const router = express.Router();
+import { Router } from "express";
+import { create, drop } from '../controllers/tableTestController';
+const router = Router();
 
-const tableTestController = require('../controllers/tableTestController');
+
 
 /*
 API Response Structure
@@ -10,8 +11,8 @@ status => Will give detailed status of the error, otherwise success.
 data => Data that will be given, there's no structure particular for the data given
 */
 // Create a new table if one doesn't exist
-router.get('/', tableTestController.create);
+router.get('/', create);
 // Drop the current table if it exist
-router.delete('/', tableTestController.drop);
+router.delete('/', drop);
 
-module.exports = router;
+export default router;

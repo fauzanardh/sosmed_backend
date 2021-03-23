@@ -1,7 +1,6 @@
-const express = require('express');
-const router = express.Router();
-
-const testController = require('../controllers/testController');
+import { Router } from "express";
+import { getTests, getTestById, createTest, updatePutTest, updatePatchTest } from '../controllers/testController';
+const router = Router();
 
 /*
 API Response Structure
@@ -10,14 +9,14 @@ status => Will give detailed status of the error, otherwise success.
 data => Data that will be given, there's no structure particular for the data given
 */
 // Retrieve all tests
-router.get('/', testController.getTests);
+router.get('/', getTests);
 // Retrieve a single test with id
-router.get('/:id', testController.getTestById);
+router.get('/:id', getTestById);
 // Create a new test
 // post body => {"name":"<test name>", "description":"<test description>"}
-router.post('/', testController.createTest);
+router.post('/', createTest);
 // Update a test with id
-router.put('/:id', testController.updatePutTest)
-router.patch('/:id', testController.updatePatchTest)
+router.put('/:id', updatePutTest)
+router.patch('/:id', updatePatchTest)
 
-module.exports = router;
+export default router;

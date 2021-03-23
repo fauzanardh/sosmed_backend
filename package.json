@@ -1,23 +1,24 @@
 {
   "name": "sosmedbackend",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
-    "start": "node ./dist/bin/www",
-    "build": "tsc --build"
+    "start": "npx tsc --build && node ./build/bin/www.js"
   },
   "dependencies": {
+    "@types/express": "^4.17.11",
+    "@types/ioredis": "^4.22.1",
+    "@types/node": "^14.14.35",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "http-errors": "~1.6.3",
     "ioredis": "^4.23.0",
+    "lodash": "^4.17.21",
     "moment": "^2.29.1",
     "morgan": "~1.9.1",
     "pg": "^8.5.1",
-    "pug": "^3.0.2",
     "redis": "^3.0.2",
-    "source-map-loader": "^2.0.1",
-    "ts-loader": "^8.0.18"
+    "typescript": "^4.2.3"
   }
 }

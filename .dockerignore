@@ -3,4 +3,4 @@ node_modules
 Dockerfile
 .idea
 .git
-dist
+build

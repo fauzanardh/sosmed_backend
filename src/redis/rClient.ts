@@ -1,9 +1,15 @@
-const redis = require("ioredis");
-const client = new redis(process.env.REDIS_PORT, "redis")
+import Redis from "ioredis";
+
+export const client = new Redis(Number(process.env.REDIS_PORT), "redis");
+
+export interface RedisJobs {
+    using_cache: boolean,
+    jobs: string
+}
 
 // This function is a helper function for retrieving data from the redis cache
 // returns a promise object
-const get = (key) => {
+export const get = (key: string) => {
     return new Promise((resolve, reject) => {
         client.get(key, (err, jobs) => {
             if (err) reject(err);
@@ -17,7 +23,7 @@ const get = (key) => {
     });
 }
 
-module.exports = {
+export default {
     client,
     get
 }
