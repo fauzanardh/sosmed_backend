@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "outDir": "./build",
+    "allowJs": true,
+    "removeComments": true,
+    "target": "es5",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}

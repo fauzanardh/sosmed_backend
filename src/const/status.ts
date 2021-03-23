@@ -1,4 +1,4 @@
-const api_error_code = {
+export const api_error_code = {
     no_error: 0,
     no_params: 1,
     sql_error: 2,
@@ -6,7 +6,7 @@ const api_error_code = {
     http_error: 4,
 };
 
-const postgres_error_codes = {
+export const postgres_error_codes = {
     "08003": "connection_does_not_exist",
     "08006": "connection_failure",
     "2F002": "modifying_sql_data_not_permitted",
@@ -22,7 +22,7 @@ const postgres_error_codes = {
     "42P02": "undefined_parameter"
 }
 
-const http_status = {
+export const http_status = {
     success: 200,
     error: 500,
     not_found: 404,
@@ -33,8 +33,8 @@ const http_status = {
     no_content: 204,
 };
 
-module.exports = {
+export default {
     api_error_code,
     postgres_error_codes,
-    http_status,
+    http_status
 }

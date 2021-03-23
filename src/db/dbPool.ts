@@ -1,6 +1,6 @@
-const pg = require("pg");
+import pg from 'pg';
 
-const pool = new pg.Pool();
+export const pool = new pg.Pool();
 
 pool.on('connect', () => {
     console.log("Connected to the DB!")
@@ -10,6 +10,6 @@ pool.on('remove', () => {
     console.log("Client removed!")
 });
 
-module.exports = {
+export default {
     pool,
-};
+}
