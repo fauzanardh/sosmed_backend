@@ -1,6 +1,6 @@
 import { api_error_code, http_status } from '../const/status'
 import rClient from '../redis/rClient'
-import { query } from '../db/dbQuery'
+import { pool as dbPool } from '../db/dbPool'
 import { Request, Response } from "express";
 
 // Used to create a new test table
@@ -10,7 +10,7 @@ export const create = (req: Request, res: Response) => {
     name VARCHAR(64) UNIQUE NOT NULL,
     description VARCHAR(255) NOT NULL,
     created_on DATE NOT NULL)`;
-    query(createTestQuery, null)
+    dbPool.query(createTestQuery, null)
         .then((r) => {
             res.json({
                 error_code: api_error_code.no_error,
@@ -34,7 +34,7 @@ export const create = (req: Request, res: Response) => {
 // Used to drop the current test table
 export const drop = (req: Request, res: Response) => {
     const dropTestQuery = 'DROP TABLE IF EXISTS test';
-    query(dropTestQuery, null)
+    dbPool.query(dropTestQuery, null)
         .then((_) => {
             const stream = rClient.client.scanStream({match: 'table_test_id_*'});
             const deleted_key: string[] = [];

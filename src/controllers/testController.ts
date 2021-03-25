@@ -3,7 +3,7 @@ import moment from 'moment';
 import {api_error_code, http_status, postgres_error_codes} from '../const/status'
 import rClient from '../redis/rClient'
 import { RedisJobs } from '../redis/rClient'
-import { query } from '../db/dbQuery'
+import { pool as dbPool } from '../db/dbPool'
 import { Request, Response } from "express";
 
 // This functions is a helper function to update the redis cache that will be used in `getAll`
@@ -12,7 +12,7 @@ const updateTestGetAllRedis = () => {
     const key = "table_test_id_all";
     const getTestQuery = `SELECT * FROM test`;
     return new Promise((resolve, reject) => {
-        query(getTestQuery, null)
+        dbPool.query(getTestQuery, null)
             .then((r: any) => {
                 rClient.client.set(key, JSON.stringify(r.rows), "EX", 600);
                 resolve(r);
@@ -33,7 +33,7 @@ const updateTestGetOneRedis = (test_id: string) => {
         test_id
     ];
     return new Promise((resolve, reject) => {
-        query(getTestQuery, values)
+        dbPool.query(getTestQuery, values)
             .then((r: any) => {
                 rClient.client.set(key, JSON.stringify(r.rows), "EX", 600);
                 resolve(r);
@@ -59,7 +59,7 @@ export const getTests = (req: Request, res: Response) => {
                 });
             } else {
                 const getTestQuery = `SELECT * FROM test`;
-                query(getTestQuery, null)
+                dbPool.query(getTestQuery, null)
                     .then((r: any) => {
                         rClient.client.set(key, JSON.stringify(r.rows), "EX", 600);
                         res.json({
@@ -111,7 +111,7 @@ export const getTestById = (req: Request, res: Response) => {
                 const values = [
                     req.params.id
                 ];
-                query(getTestQuery, values)
+                dbPool.query(getTestQuery, values)
                     .then((r: any) => {
                         if (r.rows.length === 0) {
                             res.status(http_status.error).json({
@@ -168,7 +168,7 @@ export const createTest = (req: Request, res: Response) => {
             req.body.description,
             moment(new Date()),
         ];
-        query(addTestQuery, values)
+        dbPool.query(addTestQuery, values)
             .then((r: any) => {
                 updateTestGetAllRedis()
                     .then((_) => {
@@ -229,7 +229,7 @@ export const updatePutTest = (req: Request, res: Response) => {
             req.body.description,
             req.params.id,
         ];
-        query(updateTestQuery, values)
+        dbPool.query(updateTestQuery, values)
             .then((_) => {
                 updateTestGetAllRedis()
                     .then((_) => {
@@ -303,7 +303,7 @@ export const updatePatchTest = (req: Request, res: Response) => {
             values.push(req.params.id);
             warning = "Consider using PUT when you're supplying the entire entity."
         }
-        query(updateTestQuery, values)
+        dbPool.query(updateTestQuery, values)
             .then((_) => {
                 updateTestGetAllRedis()
                     .then((_) => {
