@@ -1,4 +1,5 @@
 export const api_error_code = {
+    unknown_error: -1,
     no_error: 0,
     no_params: 1,
     sql_error: 2,
