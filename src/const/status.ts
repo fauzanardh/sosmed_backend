@@ -1,9 +1,11 @@
 export const api_error_code = {
+    unknown_error: -1,
     no_error: 0,
     no_params: 1,
     sql_error: 2,
     redis_error: 3,
     http_error: 4,
+    auth_error: 5,
 };
 
 export const postgres_error_codes = {
