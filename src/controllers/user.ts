@@ -37,7 +37,8 @@ export const createUser = async (req: Request, res: Response) => {
                 error_code: api_error_code.sql_error,
                 message: "Something went wrong.",
                 data: {
-                    error: postgres_error_codes[e.code] || e.detail || "Unknown errors"
+                    error_name: e.name,
+                    error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
                 }
             });
         }
@@ -81,7 +82,8 @@ export const getUsers = async (req: Request, res: Response) => {
             error_code: api_error_code.unknown_error,
             message: "Something went wrong.",
             data: {
-                error: e
+                error_name: e.name,
+                error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
             }
         });
     }
@@ -144,11 +146,36 @@ export const updateUser = async (req: Request, res: Response) => {
             }
         });
     } catch (e) {
+        console.log(e);
         res.status(http_status.error).json({
             error_code: api_error_code.sql_error,
             message: "Something went wrong.",
             data: {
-                error: postgres_error_codes[e.code] || e.detail || "Unknown errors"
+                error_name: e.name,
+                error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
+            }
+        });
+    }
+}
+
+export const deleteUser = async (req: Request, res: Response) => {
+    try {
+        const repository = getConnection().getRepository(User);
+        // ignoring the error here since the typing doesn't work
+        // @ts-ignore
+        await repository.delete(req.user.uuid);
+        res.json({
+            error_code: api_error_code.no_error,
+            message: "User deleted successfully.",
+            data: {}
+        });
+    } catch (e) {
+        res.status(http_status.error).json({
+            error_code: api_error_code.sql_error,
+            message: "Something went wrong.",
+            data: {
+                error_name: e.name,
+                error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
             }
         });
     }
