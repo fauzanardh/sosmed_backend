@@ -6,21 +6,21 @@ export class User {
     @PrimaryGeneratedColumn("uuid")
     uuid: string;
 
-    @Column({ length: 64 })
+    @Column({length: 64})
     name: string;
 
-    @Column({ length: 64, unique: true })
+    @Column({length: 64, unique: true})
     username: string;
 
-    @Column({ nullable: true, unique: true })
+    @Column({nullable: true, unique: true})
     email: string;
 
-    @Column({ length: 64 })
+    @Column({length: 64})
     password: string;
 
-    @Column({ length: 256, nullable: true })
+    @Column({length: 256, nullable: true})
     bio: string;
 
-    @Column({ nullable: true })
+    @Column({nullable: true})
     profilePicturePath: string;
 }

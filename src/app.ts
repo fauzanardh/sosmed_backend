@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import helmet from "helmet";
 import compression from 'compression';
 import indexRouter from './routes';
-import { initConnection } from "./db/connection";
+import {initConnection} from "./db/connection";
 import userRouter from "./routes/user";
 import loginRouter from "./routes/login";
 

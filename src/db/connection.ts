@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { createConnection, getConnection as getConn } from "typeorm";
+import {createConnection, getConnection as getConn} from "typeorm";
 
 export const initConnection = async () => {
     try {
