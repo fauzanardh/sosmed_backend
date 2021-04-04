@@ -1,5 +1,6 @@
 import {Request, Response} from "express";
 import bcrypt from "bcrypt";
+import {ILike} from "typeorm";
 import {User} from '../models/entity/User';
 import {getConnection} from "../db/connection";
 import {api_error_code, http_status, postgres_error_codes} from "../const/status";
@@ -103,6 +104,39 @@ export const getUserByUUID = async (req: Request, res: Response) => {
                 bio: user.bio,
                 profilePicturePath: user.profilePicturePath
             }
+        });
+    } catch (e) {
+        res.status(http_status.not_found).json({
+            error_code: api_error_code.sql_error,
+            message: "User not found!",
+            data: {}
+        });
+    }
+}
+
+export const searchUser = async (req: Request, res: Response) => {
+    try {
+        const repository = getConnection().getRepository(User);
+        const users = await repository.find({
+            where: [
+                {name: ILike(`%${req.params.searchString}%`)},
+                {username: ILike(`%${req.params.searchString}%`)}
+            ]
+        });
+        const returnVal = [];
+        users.forEach((user) => {
+            returnVal.push({
+                uuid: user.uuid,
+                name: user.name,
+                username: user.username,
+                bio: user.bio,
+                profilePicturePath: user.profilePicturePath
+            });
+        });
+        res.json({
+            error_code: api_error_code.no_error,
+            message: "Successfully getting the user.",
+            data: returnVal
         });
     } catch (e) {
         res.status(http_status.not_found).json({
