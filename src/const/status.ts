@@ -5,6 +5,7 @@ export const api_error_code = {
     sql_error: 2,
     redis_error: 3,
     http_error: 4,
+    auth_error: 5,
 };
 
 export const postgres_error_codes = {

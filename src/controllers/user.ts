@@ -37,7 +37,7 @@ export const createUser = async (req: Request, res: Response) => {
                 error_code: api_error_code.sql_error,
                 message: "Something went wrong.",
                 data: {
-                    error: postgres_error_codes[e.code] || e.detail
+                    error: postgres_error_codes[e.code] || e.detail || "Unknown errors"
                 }
             });
         }
@@ -60,7 +60,6 @@ export const getUsers = async (req: Request, res: Response) => {
         // default 25, max 100
         const limit = Math.min((req.query.limit) ? parseInt(req.query.limit as string, 10) : 25, 100);
         const page = (req.query.page) ? parseInt(req.query.page as string, 10) : 0;
-        console.log(req.query, limit, page);
         const users = await repository.find({take: limit, skip: page * limit});
         const returnVal = [];
         users.forEach((user) => {
@@ -111,3 +110,47 @@ export const getUserByUUID = async (req: Request, res: Response) => {
         });
     }
 }
+
+export const updateUser = async (req: Request, res: Response) => {
+    try {
+        const repository = getConnection().getRepository(User);
+        // ignoring the error here since the typing doesn't work
+        // @ts-ignore
+        const user = await repository.findOneOrFail({uuid: req.user.uuid});
+        let additionalInfo;
+        if (req.body.name) user.name = req.body.name;
+        if (req.body.email) user.email = req.body.email;
+        if (req.body.bio) user.bio = req.body.bio
+        if (req.body.newPassword && req.body.currentPassword) {
+            const validPassword = await bcrypt.compare(req.body.currentPassword, user.password);
+            if (validPassword) {
+                const salt = await bcrypt.genSalt(12);
+                user.password = await bcrypt.hash(req.body.newPassword, salt);
+            } else {
+                additionalInfo = "Incorrect current password, password didn't change."
+            }
+        }
+        await repository.save(user);
+        res.json({
+            error_code: api_error_code.no_error,
+            message: "Updated successfully.",
+            data: {
+                uuid: user.uuid,
+                name: user.name,
+                username: user.username,
+                bio: user.bio,
+                profilePicturePath: user.profilePicturePath,
+                additionalInfo: additionalInfo
+            }
+        });
+    } catch (e) {
+        res.status(http_status.error).json({
+            error_code: api_error_code.sql_error,
+            message: "Something went wrong.",
+            data: {
+                error: postgres_error_codes[e.code] || e.detail || "Unknown errors"
+            }
+        });
+    }
+}
+

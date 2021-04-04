@@ -6,10 +6,9 @@ import morgan from 'morgan';
 import helmet from "helmet";
 import compression from 'compression';
 import indexRouter from './routes';
-import testApiRouter from './routes/testApi';
-import tableTestApiRouter from './routes/tableTestApi'
 import { initConnection } from "./db/connection";
 import userRouter from "./routes/user";
+import loginRouter from "./routes/login";
 
 // Initialize the expressjs
 const app = express();
@@ -23,8 +22,7 @@ app.use(compression());
 app.use('/api', indexRouter);
 app.use('/api/v1', indexRouter);
 app.use('/api/v1/user', userRouter);
-// app.use('/api/v1/test', testApiRouter);
-// app.use('/api/v1/table_test', tableTestApiRouter);
+app.use('/api/v1/login', loginRouter);
 
 // catch 404 and forward to error handler
 app.use((req: Request, res: Response, next: NextFunction) => {
