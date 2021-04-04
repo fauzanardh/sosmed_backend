@@ -1,9 +1,9 @@
 import moment from 'moment';
 
-import {api_error_code, http_status, postgres_error_codes} from '../const/status'
-import rClient from '../redis/rClient'
-import { RedisJobs } from '../redis/rClient'
-import { pool as dbPool } from '../db/dbPool'
+import {api_error_code, http_status, postgres_error_codes} from '../const/status';
+import rClient from '../redis/rClient';
+import { RedisJobs } from '../redis/rClient';
+import { pool as dbPool } from '../db/dbPool';
 import { Request, Response } from "express";
 
 // This functions is a helper function to update the redis cache that will be used in `getAll`

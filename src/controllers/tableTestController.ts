@@ -1,6 +1,6 @@
-import { api_error_code, http_status } from '../const/status'
-import rClient from '../redis/rClient'
-import { pool as dbPool } from '../db/dbPool'
+import { api_error_code, http_status } from '../const/status';
+import rClient from '../redis/rClient';
+import { pool as dbPool } from '../db/dbPool';
 import { Request, Response } from "express";
 
 // Used to create a new test table

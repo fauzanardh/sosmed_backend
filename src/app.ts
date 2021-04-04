@@ -5,10 +5,11 @@ import {Request, Response, NextFunction} from "express";
 import morgan from 'morgan';
 import helmet from "helmet";
 import compression from 'compression';
-import {createConnection} from "typeorm";
 import indexRouter from './routes';
 import testApiRouter from './routes/testApi';
 import tableTestApiRouter from './routes/tableTestApi'
+import { initConnection } from "./db/connection";
+import userRouter from "./routes/user";
 
 // Initialize the expressjs
 const app = express();
@@ -21,8 +22,9 @@ app.use(compression());
 
 app.use('/api', indexRouter);
 app.use('/api/v1', indexRouter);
-app.use('/api/v1/test', testApiRouter);
-app.use('/api/v1/table_test', tableTestApiRouter);
+app.use('/api/v1/user', userRouter);
+// app.use('/api/v1/test', testApiRouter);
+// app.use('/api/v1/table_test', tableTestApiRouter);
 
 // catch 404 and forward to error handler
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -41,26 +43,8 @@ app.use((err: any, req: any, res: any) => {
 });
 
 // Creating connection to the database by using typeorm's createConnection
-createConnection({
-    "type": "postgres",
-    "host": process.env.DB_HOST,
-    "port": parseInt(process.env.DB_PORT, 10),
-    "username": process.env.DB_USER,
-    "password": process.env.DB_PASS,
-    "database": process.env.DB_NAME,
-    "synchronize": true,
-    "logging": false,
-    "entities": [
-        "src/models/entity/**/*.ts"
-    ],
-    "migrations": [
-        "src/models/migration/**/*.ts"
-    ],
-    "subscribers": [
-        "src/models/subscriber/**/*.ts"
-    ],
-})
-    .then((r) => {
+initConnection()
+    .then(() => {
         console.log("Connection created successfully.");
     })
     .catch((e) => {

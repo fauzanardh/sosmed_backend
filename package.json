@@ -6,9 +6,11 @@
     "start": "npx ts-node src/bin/www.ts"
   },
   "dependencies": {
+    "@types/bcrypt": "^3.0.0",
     "@types/express": "^4.17.11",
     "@types/ioredis": "^4.22.1",
     "@types/node": "^14.14.35",
+    "bcrypt": "^5.0.1",
     "compression": "^1.7.4",
     "debug": "~2.6.9",
     "express": "~4.16.1",
