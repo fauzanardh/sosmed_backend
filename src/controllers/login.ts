@@ -32,7 +32,7 @@ export const login = async (req: Request, res: Response) => {
                 });
             }
         } catch (e) {
-            res.status(http_status.error).json({
+            res.status(http_status.not_found).json({
                 error_code: api_error_code.sql_error,
                 message: "User not found.",
                 data: {}

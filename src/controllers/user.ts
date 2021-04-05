@@ -43,7 +43,7 @@ export const createUser = async (req: Request, res: Response) => {
                        constraints.push({property: _e.property, constraint: _e.constraints})
                    }
                 });
-                res.status(http_status.error).json({
+                res.status(http_status.bad).json({
                     error_code: api_error_code.validation_error,
                     message: "Something went wrong when validating the input.",
                     data: {
@@ -62,7 +62,7 @@ export const createUser = async (req: Request, res: Response) => {
             }
         }
     } else {
-        res.status(http_status.error).json({
+        res.status(http_status.bad).json({
             error_code: api_error_code.no_params,
             message: "Fix the required params!",
             data: {
@@ -104,7 +104,7 @@ export const getUsers = async (req: Request, res: Response) => {
             data: returnVal
         });
     } catch (e) {
-        res.status(http_status.not_found).json({
+        res.status(http_status.error).json({
             error_code: api_error_code.unknown_error,
             message: "Something went wrong.",
             data: {
@@ -227,7 +227,7 @@ export const updateUser = async (req: Request, res: Response) => {
                     constraints.push({property: _e.property, constraint: _e.constraints})
                 }
             });
-            res.status(http_status.error).json({
+            res.status(http_status.bad).json({
                 error_code: api_error_code.validation_error,
                 message: "Something went wrong when validating the input.",
                 data: {
