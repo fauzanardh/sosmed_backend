@@ -15,7 +15,7 @@ export const login = async (req: Request, res: Response) => {
                 const accessToken = jwt.sign({
                     uuid: user.uuid,
                     username: user.username
-                }, process.env.JWT_SECRET, {expiresIn: '1800s'});
+                }, process.env.JWT_SECRET, {expiresIn: '180d'});
                 res.json({
                     error_code: api_error_code.no_error,
                     message: "Logged in successfully.",

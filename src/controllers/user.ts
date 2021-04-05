@@ -47,7 +47,8 @@ export const createUser = async (req: Request, res: Response) => {
                     error_code: api_error_code.validation_error,
                     message: "Something went wrong when validating the input.",
                     data: {
-                        constraints: constraints
+                        error_name: "ValidationError",
+                        error_detail: constraints
                     }
                 });
             } else {
@@ -124,7 +125,7 @@ export const getOwnUser = async (req: Request, res: Response) => {
         const user = await repository.findOneOrFail({
             where: {uuid: uuid},
             cache: {
-                id: `table_user_get_uuid_${uuid}`,
+                id: `table_user_get_own_uuid_${uuid}`,
                 milliseconds: 300000
             }
         });
@@ -143,8 +144,11 @@ export const getOwnUser = async (req: Request, res: Response) => {
     } catch (e) {
         res.status(http_status.not_found).json({
             error_code: api_error_code.sql_error,
-            message: "User not found!",
-            data: {}
+            message: "Something went wrong when querying the data.",
+            data: {
+                error_name: e.name,
+                error_detail: "User not found.",
+            }
         });
     }
 }
@@ -173,8 +177,11 @@ export const getUserByUUID = async (req: Request, res: Response) => {
     } catch (e) {
         res.status(http_status.not_found).json({
             error_code: api_error_code.sql_error,
-            message: "User not found!",
-            data: {}
+            message: "Something went wrong when querying the data.",
+            data: {
+                error_name: e.name,
+                error_detail: "User not found.",
+            }
         });
     }
 }
@@ -214,8 +221,11 @@ export const searchUser = async (req: Request, res: Response) => {
     } catch (e) {
         res.status(http_status.not_found).json({
             error_code: api_error_code.sql_error,
-            message: "User not found!",
-            data: {}
+            message: "Something went wrong when querying the data.",
+            data: {
+                error_name: e.name,
+                error_detail: "User not found.",
+            }
         });
     }
 }
@@ -265,7 +275,8 @@ export const updateUser = async (req: Request, res: Response) => {
                 error_code: api_error_code.validation_error,
                 message: "Something went wrong when validating the input.",
                 data: {
-                    constraints: constraints
+                    error_name: "ValidationError",
+                    error_detail: constraints
                 }
             });
         } else {
