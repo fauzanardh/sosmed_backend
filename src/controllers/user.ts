@@ -85,7 +85,7 @@ export const getUsers = async (req: Request, res: Response) => {
             skip: page * limit,
             cache: {
                 id: `table_user_all_users_${limit}_${page}`,
-                milliseconds: 30000
+                milliseconds: 300000
             }
         });
         const returnVal = [];
@@ -115,6 +115,40 @@ export const getUsers = async (req: Request, res: Response) => {
     }
 }
 
+export const getOwnUser = async (req: Request, res: Response) => {
+    try {
+        const repository = getConnection().getRepository(User);
+        // ignoring the error here since the typing doesn't work
+        // @ts-ignore
+        const uuid = req.user.uuid;
+        const user = await repository.findOneOrFail({
+            where: {uuid: uuid},
+            cache: {
+                id: `table_user_get_uuid_${uuid}`,
+                milliseconds: 300000
+            }
+        });
+        res.json({
+            error_code: api_error_code.no_error,
+            message: "Successfully getting the user.",
+            data: {
+                uuid: user.uuid,
+                name: user.name,
+                username: user.username,
+                email: user.email,
+                bio: user.bio,
+                profilePicturePath: user.profilePicturePath
+            }
+        });
+    } catch (e) {
+        res.status(http_status.not_found).json({
+            error_code: api_error_code.sql_error,
+            message: "User not found!",
+            data: {}
+        });
+    }
+}
+
 export const getUserByUUID = async (req: Request, res: Response) => {
     try {
         const repository = getConnection().getRepository(User);
@@ -122,7 +156,7 @@ export const getUserByUUID = async (req: Request, res: Response) => {
             where: {uuid: req.params.uuid},
             cache: {
                 id: `table_user_get_uuid_${req.params.uuid}`,
-                milliseconds: 30000
+                milliseconds: 300000
             }
         });
         res.json({
@@ -159,7 +193,7 @@ export const searchUser = async (req: Request, res: Response) => {
             skip: page * limit,
             cache: {
                 id: `table_user_search_${req.params.searchString}_${limit}_${page}`,
-                milliseconds: 30000
+                milliseconds: 300000
             }
         });
         const returnVal = [];
