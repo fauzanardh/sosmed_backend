@@ -15,7 +15,7 @@ export const login = async (req: Request, res: Response) => {
                 const accessToken = jwt.sign({
                     uuid: user.uuid,
                     username: user.username
-                }, process.env.JWT_SECRET, {expiresIn: '1800s'});
+                }, process.env.JWT_SECRET, {expiresIn: '180d'});
                 res.json({
                     error_code: api_error_code.no_error,
                     message: "Logged in successfully.",
@@ -32,7 +32,7 @@ export const login = async (req: Request, res: Response) => {
                 });
             }
         } catch (e) {
-            res.status(http_status.error).json({
+            res.status(http_status.not_found).json({
                 error_code: api_error_code.sql_error,
                 message: "User not found.",
                 data: {}
