@@ -3,17 +3,9 @@ import {getConnection} from "../db/connection";
 import {api_error_code, http_status, postgres_error_codes} from "../const/status";
 import {Post} from "../models/entity/Post";
 import {User} from "../models/entity/User";
-import {client as rClient} from "../redis/rClient";
 import {ValidationError} from "class-validator";
-
-const removePostCache = async () => {
-    const stream = rClient.scanStream({match: 'table_post_*'})
-    stream.on('data', (keys) => {
-        keys.forEach((key) => {
-            rClient.del(key);
-        });
-    });
-}
+import {removePostCache} from "../utils/redis";
+import {parseLikedBy, parsePosts} from "../utils/models";
 
 export const createPost = async (req: Request, res: Response) => {
     if (req.body.imageId) {
@@ -103,24 +95,11 @@ export const getOwnPosts = async (req: Request, res: Response) => {
                 milliseconds: 300000
             }
         });
-        const returnVal = [];
-        posts.forEach((post: Post) => {
-            const likedBy = [];
-            post.likedBy.forEach((user: User) => {
-                likedBy.push({name: user.name, uuid: user.uuid});
-            });
-            returnVal.push({
-                postId: post.uuid,
-                imageId: post.imageId,
-                authorId: post.author.uuid,
-                likedBy: likedBy,
-            });
-        });
         res.json({
             error_code: api_error_code.no_error,
             message: "Posts fetched successfully.",
             data: {
-                posts: returnVal,
+                posts: parsePosts(posts),
             }
         });
     } catch (e) {
@@ -151,24 +130,11 @@ export const getPostsByUserUUID = async (req: Request, res: Response) => {
                 milliseconds: 300000
             }
         });
-        const returnVal = [];
-        posts.forEach((post: Post) => {
-            const likedBy = [];
-            post.likedBy.forEach((user: User) => {
-                likedBy.push({name: user.name, uuid: user.uuid});
-            });
-            returnVal.push({
-                postId: post.uuid,
-                imageId: post.imageId,
-                authorId: post.author.uuid,
-                likedBy: likedBy,
-            });
-        });
         res.json({
             error_code: api_error_code.no_error,
             message: "Posts fetched successfully.",
             data: {
-                posts: returnVal,
+                posts: parsePosts(posts),
             }
         });
     } catch (e) {
@@ -194,16 +160,6 @@ export const getPostByUUID = async (req: Request, res: Response) => {
                 milliseconds: 300000
             }
         });
-        const likedBy = [];
-        post.likedBy.forEach((user: User) => {
-            likedBy.push({name: user.name, uuid: user.uuid});
-        });
-        // const comments = [];
-        // post.comments.forEach((comment: Comment) => {
-        //     comments.push({
-        //         au
-        //     })
-        // });
         res.json({
             error_code: api_error_code.no_error,
             message: "Posts fetched successfully.",
@@ -211,8 +167,7 @@ export const getPostByUUID = async (req: Request, res: Response) => {
                 postId: post.uuid,
                 imageId: post.imageId,
                 authorId: post.author.uuid,
-                likedBy: likedBy,
-                comments: post.comments,
+                likedBy: parseLikedBy(post.likedBy),
             }
         });
     } catch (e) {

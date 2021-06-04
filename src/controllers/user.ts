@@ -4,44 +4,9 @@ import {ILike} from "typeorm";
 import {User} from '../models/entity/User';
 import {getConnection} from "../db/connection";
 import {api_error_code, http_status, postgres_error_codes} from "../const/status";
-import {client as rClient} from "../redis/rClient";
 import {ValidationError} from "class-validator";
-
-const removeUserCache = async () => {
-    const stream = rClient.scanStream({match: 'table_user_*'})
-    stream.on('data', (keys) => {
-        keys.forEach((key) => {
-            rClient.del(key);
-        });
-    });
-}
-
-const parseFollow = (follow: User[]) => {
-    const follows = [];
-    follow.forEach((_follow: User) => {
-        follows.push({
-            uuid: _follow.uuid,
-            name: _follow.name,
-        });
-    });
-    return follows;
-}
-
-const parseUsers = (users: User[]) => {
-    const returnVal = [];
-    users.forEach((user: User) => {
-        returnVal.push({
-            uuid: user.uuid,
-            name: user.name,
-            username: user.username,
-            bio: user.bio,
-            profilePicturePath: user.profilePicturePath,
-            followers: parseFollow(user.followers),
-            following: parseFollow(user.following),
-        });
-    });
-    return returnVal;
-}
+import {removeUserCache} from "../utils/redis";
+import {parseFollow, parsePosts, parseUsers} from "../utils/models";
 
 export const createUser = async (req: Request, res: Response) => {
     if (req.body.name && req.body.username && req.body.password) {
@@ -141,7 +106,7 @@ export const getOwnUser = async (req: Request, res: Response) => {
         // @ts-ignore
         const uuid = req.user.uuid;
         const user = await repository.findOneOrFail({
-            relations: ["following", "followers"],
+            relations: ["following", "followers", "posts", "posts.likedBy"],
             where: {uuid: uuid},
             cache: {
                 id: `table_user_get_own_${uuid}`,
@@ -160,6 +125,7 @@ export const getOwnUser = async (req: Request, res: Response) => {
                 profilePicturePath: user.profilePicturePath,
                 followers: parseFollow(user.followers),
                 following: parseFollow(user.following),
+                posts: parsePosts(user.posts),
             }
         });
     } catch (e) {
@@ -195,7 +161,8 @@ export const getUserByUUID = async (req: Request, res: Response) => {
                 bio: user.bio,
                 profilePicturePath: user.profilePicturePath,
                 followers: parseFollow(user.followers),
-                following: parseFollow(user.following)
+                following: parseFollow(user.following),
+                posts: parsePosts(user.posts),
             }
         });
     } catch (e) {
