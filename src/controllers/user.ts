@@ -29,7 +29,7 @@ export const createUser = async (req: Request, res: Response) => {
             await removeUserCache();
             res.json({
                 error_code: api_error_code.no_error,
-                message: "Successfully added a new test.",
+                message: "Successfully added a new user.",
                 data: {
                     id: newUser.uuid,
                     name: newUser.username,
@@ -90,7 +90,7 @@ export const getUsers = async (req: Request, res: Response) => {
             }
         });
         const returnVal = [];
-        users.forEach((user) => {
+        users.forEach((user: User) => {
             returnVal.push({
                 uuid: user.uuid,
                 name: user.name,
@@ -101,7 +101,7 @@ export const getUsers = async (req: Request, res: Response) => {
         });
         res.json({
             error_code: api_error_code.no_error,
-            message: "Successfully getting the users.",
+            message: "Users fetched successfully.",
             data: returnVal
         });
     } catch (e) {
@@ -125,13 +125,13 @@ export const getOwnUser = async (req: Request, res: Response) => {
         const user = await repository.findOneOrFail({
             where: {uuid: uuid},
             cache: {
-                id: `table_user_get_own_uuid_${uuid}`,
+                id: `table_user_get_own_${uuid}`,
                 milliseconds: 300000
             }
         });
         res.json({
             error_code: api_error_code.no_error,
-            message: "Successfully getting the user.",
+            message: "User fetched successfully.",
             data: {
                 uuid: user.uuid,
                 name: user.name,
@@ -165,7 +165,7 @@ export const getUserByUUID = async (req: Request, res: Response) => {
         });
         res.json({
             error_code: api_error_code.no_error,
-            message: "Successfully getting the user.",
+            message: "User fetched successfully.",
             data: {
                 uuid: user.uuid,
                 name: user.name,
@@ -215,7 +215,7 @@ export const searchUser = async (req: Request, res: Response) => {
         });
         res.json({
             error_code: api_error_code.no_error,
-            message: "Successfully getting the user.",
+            message: "Users fetched successfully.",
             data: returnVal
         });
     } catch (e) {
@@ -236,33 +236,44 @@ export const updateUser = async (req: Request, res: Response) => {
         // ignoring the error here since the typing doesn't work
         // @ts-ignore
         const user = await repository.findOneOrFail({uuid: req.user.uuid});
-        let additionalInfo;
-        if (req.body.name) user.name = req.body.name;
-        if (req.body.email) user.email = req.body.email;
-        if (req.body.bio) user.bio = req.body.bio
-        if (req.body.newPassword && req.body.currentPassword) {
-            const validPassword = await bcrypt.compare(req.body.currentPassword, user.password);
-            if (validPassword) {
-                const salt = await bcrypt.genSalt(12);
-                user.password = await bcrypt.hash(req.body.newPassword, salt);
+        if (req.body.currentPassword) {
+            const isPasswordValid = await bcrypt.compare(req.body.currentPassword, user.password);
+            if (isPasswordValid) {
+                if (req.body.name) user.name = req.body.name;
+                if (req.body.email) user.email = req.body.email;
+                if (req.body.bio) user.bio = req.body.bio
+                if (req.body.newPassword) {
+                    const salt = await bcrypt.genSalt(12);
+                    user.password = await bcrypt.hash(req.body.newPassword, salt);
+                    await repository.save(user);
+                    await removeUserCache();
+                    res.json({
+                        error_code: api_error_code.no_error,
+                        message: "Updated successfully.",
+                        data: {
+                            uuid: user.uuid,
+                            name: user.name,
+                            username: user.username,
+                            bio: user.bio,
+                            profilePicturePath: user.profilePicturePath,
+                        }
+                    });
+                }
             } else {
-                additionalInfo = "Incorrect current password, password didn't change."
+                res.json({
+                    error_code: api_error_code.auth_error,
+                    message: "Wrong current password!",
+                    data: {}
+                });
             }
+        } else {
+            res.json({
+                error_code: api_error_code.auth_error,
+                message: "Current password is not provided!",
+                data: {}
+            });
         }
-        await repository.save(user);
-        await removeUserCache();
-        res.json({
-            error_code: api_error_code.no_error,
-            message: "Updated successfully.",
-            data: {
-                uuid: user.uuid,
-                name: user.name,
-                username: user.username,
-                bio: user.bio,
-                profilePicturePath: user.profilePicturePath,
-                additionalInfo: additionalInfo
-            }
-        });
+
     } catch (e) {
         if (e instanceof Array) {
             const constraints = [];

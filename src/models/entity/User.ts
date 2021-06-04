@@ -1,5 +1,7 @@
-import {Entity, Column, PrimaryGeneratedColumn, BaseEntity, BeforeInsert, BeforeUpdate} from "typeorm";
+import {Entity, Column, PrimaryGeneratedColumn, BaseEntity, BeforeInsert, BeforeUpdate, OneToMany} from "typeorm";
 import {validateOrReject, IsOptional, IsDefined, IsEmail, IsAlphanumeric} from 'class-validator';
+import {Comment} from "./Comment";
+import {Post} from "./Post";
 
 @Entity()
 export class User extends BaseEntity {
@@ -7,11 +9,11 @@ export class User extends BaseEntity {
     @PrimaryGeneratedColumn("uuid")
     uuid: string;
 
-    @Column({length: 64})
+    @Column({length: 63})
     @IsDefined()
     name: string;
 
-    @Column({length: 64, unique: true})
+    @Column({length: 63, unique: true})
     @IsDefined()
     @IsAlphanumeric()
     username: string;
@@ -21,17 +23,29 @@ export class User extends BaseEntity {
     @IsEmail()
     email: string;
 
-    @Column({length: 64})
+    @Column({length: 63})
     @IsDefined()
     password: string;
 
-    @Column({length: 256, nullable: true})
+    @Column({length: 255, nullable: true})
     @IsOptional()
     bio: string;
 
     @Column({nullable: true})
     @IsOptional()
     profilePicturePath: string;
+
+    @OneToMany(
+        () => Comment,
+        (comment: Comment) => comment.author
+    )
+    comments: Comment[];
+
+    @OneToMany(
+        () => Post,
+        (post: Post) => post.author
+    )
+    posts: Post[];
 
     @BeforeInsert()
     @BeforeUpdate()

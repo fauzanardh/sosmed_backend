@@ -9,6 +9,7 @@ import indexRouter from './routes';
 import {initConnection} from "./db/connection";
 import userRouter from "./routes/user";
 import loginRouter from "./routes/login";
+import postsRouter from "./routes/post";
 
 // Initialize the expressjs
 const app = express();
@@ -19,10 +20,10 @@ app.use(express.urlencoded({extended: false}));
 app.use(helmet());
 app.use(compression());
 
-app.use('/api', indexRouter);
-app.use('/api/v1', indexRouter);
-app.use('/api/v1/user', userRouter);
-app.use('/api/v1/login', loginRouter);
+app.use('', indexRouter);
+app.use('/user', userRouter);
+app.use('/login', loginRouter);
+app.use('/posts', postsRouter);
 
 // catch 404 and forward to error handler
 app.use((req: Request, res: Response, next: NextFunction) => {

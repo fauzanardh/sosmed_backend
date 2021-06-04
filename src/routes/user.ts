@@ -1,7 +1,7 @@
 import {Router} from "express";
-import {createUser, getUserByUUID, getUsers, updateUser, deleteUser, searchUser, getOwnUser} from "../controllers/user";
 import jwt from "express-jwt";
 import {handleJWTError} from "../middlewares/jwt";
+import {createUser, getUserByUUID, getUsers, updateUser, deleteUser, searchUser, getOwnUser} from "../controllers/user";
 
 const router = Router();
 
