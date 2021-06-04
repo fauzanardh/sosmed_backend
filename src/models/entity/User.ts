@@ -1,4 +1,14 @@
-import {Entity, Column, PrimaryGeneratedColumn, BaseEntity, BeforeInsert, BeforeUpdate, OneToMany} from "typeorm";
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    BaseEntity,
+    BeforeInsert,
+    BeforeUpdate,
+    OneToMany,
+    ManyToMany,
+    JoinTable
+} from "typeorm";
 import {validateOrReject, IsOptional, IsDefined, IsEmail, IsAlphanumeric} from 'class-validator';
 import {Comment} from "./Comment";
 import {Post} from "./Post";
@@ -34,6 +44,14 @@ export class User extends BaseEntity {
     @Column({nullable: true})
     @IsOptional()
     profilePicturePath: string;
+
+    @ManyToMany(() => User)
+    @JoinTable()
+    following: User[];
+
+    @ManyToMany(() => User)
+    @JoinTable()
+    followers: User[];
 
     @OneToMany(
         () => Comment,

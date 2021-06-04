@@ -16,6 +16,36 @@ const removeUserCache = async () => {
     });
 }
 
+const parseUsers = (users: User[]) => {
+    const returnVal = [];
+    users.forEach((user: User) => {
+        const followers = [];
+        user.followers.forEach((_follower: User) => {
+            followers.push({
+                uuid: _follower.uuid,
+                name: _follower.name,
+            });
+        });
+        const following = [];
+        user.following.forEach((_following: User) => {
+            following.push({
+                uuid: _following.uuid,
+                name: _following.name,
+            });
+        });
+        returnVal.push({
+            uuid: user.uuid,
+            name: user.name,
+            username: user.username,
+            bio: user.bio,
+            profilePicturePath: user.profilePicturePath,
+            followers: followers,
+            following: following,
+        });
+    });
+    return returnVal;
+}
+
 export const createUser = async (req: Request, res: Response) => {
     if (req.body.name && req.body.username && req.body.password) {
         try {
@@ -39,9 +69,9 @@ export const createUser = async (req: Request, res: Response) => {
             if (e instanceof Array) {
                 const constraints = [];
                 e.forEach((_e) => {
-                   if (_e instanceof ValidationError) {
-                       constraints.push({property: _e.property, constraint: _e.constraints})
-                   }
+                    if (_e instanceof ValidationError) {
+                        constraints.push({property: _e.property, constraint: _e.constraints})
+                    }
                 });
                 res.status(http_status.bad).json({
                     error_code: api_error_code.validation_error,
@@ -82,6 +112,7 @@ export const getUsers = async (req: Request, res: Response) => {
         const limit = Math.min((req.query.limit) ? parseInt(req.query.limit as string, 10) : 25, 100);
         const page = (req.query.page) ? parseInt(req.query.page as string, 10) : 0;
         const users = await repository.find({
+            relations: ["following", "followers"],
             take: limit,
             skip: page * limit,
             cache: {
@@ -89,20 +120,10 @@ export const getUsers = async (req: Request, res: Response) => {
                 milliseconds: 300000
             }
         });
-        const returnVal = [];
-        users.forEach((user: User) => {
-            returnVal.push({
-                uuid: user.uuid,
-                name: user.name,
-                username: user.username,
-                bio: user.bio,
-                profilePicturePath: user.profilePicturePath
-            });
-        });
         res.json({
             error_code: api_error_code.no_error,
             message: "Users fetched successfully.",
-            data: returnVal
+            data: parseUsers(users)
         });
     } catch (e) {
         res.status(http_status.error).json({
@@ -123,11 +144,26 @@ export const getOwnUser = async (req: Request, res: Response) => {
         // @ts-ignore
         const uuid = req.user.uuid;
         const user = await repository.findOneOrFail({
+            relations: ["following", "followers"],
             where: {uuid: uuid},
             cache: {
                 id: `table_user_get_own_${uuid}`,
                 milliseconds: 300000
             }
+        });
+        const followers = [];
+        user.followers.forEach((_follower: User) => {
+            followers.push({
+                uuid: _follower.uuid,
+                name: _follower.name,
+            });
+        });
+        const following = [];
+        user.following.forEach((_following: User) => {
+            following.push({
+                uuid: _following.uuid,
+                name: _following.name,
+            });
         });
         res.json({
             error_code: api_error_code.no_error,
@@ -138,7 +174,9 @@ export const getOwnUser = async (req: Request, res: Response) => {
                 username: user.username,
                 email: user.email,
                 bio: user.bio,
-                profilePicturePath: user.profilePicturePath
+                profilePicturePath: user.profilePicturePath,
+                followers: followers,
+                following: following,
             }
         });
     } catch (e) {
@@ -157,11 +195,26 @@ export const getUserByUUID = async (req: Request, res: Response) => {
     try {
         const repository = getConnection().getRepository(User);
         const user = await repository.findOneOrFail({
+            relations: ["following", "followers"],
             where: {uuid: req.params.uuid},
             cache: {
                 id: `table_user_get_uuid_${req.params.uuid}`,
                 milliseconds: 300000
             }
+        });
+        const followers = [];
+        user.followers.forEach((_follower: User) => {
+            followers.push({
+                uuid: _follower.uuid,
+                name: _follower.name,
+            });
+        });
+        const following = [];
+        user.following.forEach((_following: User) => {
+            following.push({
+                uuid: _following.uuid,
+                name: _following.name,
+            });
         });
         res.json({
             error_code: api_error_code.no_error,
@@ -171,7 +224,9 @@ export const getUserByUUID = async (req: Request, res: Response) => {
                 name: user.name,
                 username: user.username,
                 bio: user.bio,
-                profilePicturePath: user.profilePicturePath
+                profilePicturePath: user.profilePicturePath,
+                followers: followers,
+                following: following
             }
         });
     } catch (e) {
@@ -192,6 +247,7 @@ export const searchUser = async (req: Request, res: Response) => {
         const limit = Math.min((req.query.limit) ? parseInt(req.query.limit as string, 10) : 25, 100);
         const page = (req.query.page) ? parseInt(req.query.page as string, 10) : 0;
         const users = await repository.find({
+            relations: ["following", "followers"],
             where: [
                 {name: ILike(`%${req.params.searchString}%`)},
                 {username: ILike(`%${req.params.searchString}%`)}
@@ -203,20 +259,10 @@ export const searchUser = async (req: Request, res: Response) => {
                 milliseconds: 300000
             }
         });
-        const returnVal = [];
-        users.forEach((user) => {
-            returnVal.push({
-                uuid: user.uuid,
-                name: user.name,
-                username: user.username,
-                bio: user.bio,
-                profilePicturePath: user.profilePicturePath
-            });
-        });
         res.json({
             error_code: api_error_code.no_error,
             message: "Users fetched successfully.",
-            data: returnVal
+            data: parseUsers(users)
         });
     } catch (e) {
         res.status(http_status.not_found).json({
@@ -315,6 +361,100 @@ export const deleteUser = async (req: Request, res: Response) => {
             message: "User deleted successfully.",
             data: {}
         });
+    } catch (e) {
+        res.status(http_status.error).json({
+            error_code: api_error_code.sql_error,
+            message: "Something went wrong.",
+            data: {
+                error_name: e.name,
+                error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
+            }
+        });
+    }
+}
+
+export const followUser = async (req: Request, res: Response) => {
+    try {
+        const repository = getConnection().getRepository(User);
+        // ignoring the error here since the typing doesn't work
+        // @ts-ignore
+        const uuid = req.user.uuid;
+        if (uuid === req.params.uuid) {
+            res.status(http_status.error).json({
+                error_code: api_error_code.validation_error,
+                message: "Can't follow yourself.",
+                data: {}
+            });
+        } else {
+            const userFrom = await repository.findOneOrFail({
+                relations: ["following", "followers"],
+                where: {uuid: uuid},
+                cache: {
+                    id: `table_user_get_uuid_${uuid}`,
+                    milliseconds: 300000
+                }
+            });
+            const userTo = await repository.findOneOrFail({
+                relations: ["following", "followers"],
+                where: {uuid: req.params.uuid},
+                cache: {
+                    id: `table_user_get_uuid_${req.params.uuid}`,
+                    milliseconds: 300000
+                }
+            });
+            if (req.body.followStatus) {
+                const indexFrom = userFrom.following.map((_u: User) => {
+                    return _u.uuid
+                }).indexOf(userTo.uuid);
+                const indexTo = userTo.followers.map((_u: User) => {
+                    return _u.uuid
+                }).indexOf(userFrom.uuid);
+                if (indexFrom === -1 && indexTo === -1) {
+                    userFrom.following.push(userTo);
+                    userTo.followers.push(userFrom);
+                    await repository.save(userTo);
+                    await repository.save(userFrom);
+                    await removeUserCache();
+                    res.json({
+                        error_code: api_error_code.no_error,
+                        message: "User successfully followed.",
+                        data: {}
+                    });
+                } else {
+                    res.json({
+                        error_code: api_error_code.no_error,
+                        message: "User already followed.",
+                        data: {}
+                    });
+                }
+            } else {
+                const indexFrom = userFrom.following.map((_u: User) => {
+                    return _u.uuid
+                }).indexOf(userTo.uuid);
+                const indexTo = userTo.followers.map((_u: User) => {
+                    return _u.uuid
+                }).indexOf(userFrom.uuid);
+                console.log(indexFrom, indexTo);
+                if (indexFrom !== -1 && indexTo !== -1) {
+                    userFrom.following.splice(indexFrom, 1);
+                    userTo.followers.splice(indexTo, 1);
+                    await repository.save(userFrom);
+                    await repository.save(userTo);
+                    await removeUserCache();
+                    res.json({
+                        error_code: api_error_code.no_error,
+                        message: "User successfully unfollowed.",
+                        data: {}
+                    });
+                } else {
+                    res.json({
+                        error_code: api_error_code.no_error,
+                        message: "User not followed.",
+                        data: {}
+                    });
+                }
+            }
+        }
     } catch (e) {
         res.status(http_status.error).json({
             error_code: api_error_code.sql_error,

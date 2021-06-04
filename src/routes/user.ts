@@ -1,7 +1,16 @@
 import {Router} from "express";
 import jwt from "express-jwt";
 import {handleJWTError} from "../middlewares/jwt";
-import {createUser, getUserByUUID, getUsers, updateUser, deleteUser, searchUser, getOwnUser} from "../controllers/user";
+import {
+    createUser,
+    getUserByUUID,
+    getUsers,
+    updateUser,
+    deleteUser,
+    searchUser,
+    getOwnUser,
+    followUser
+} from "../controllers/user";
 
 const router = Router();
 
@@ -27,5 +36,13 @@ router.delete(
     handleJWTError,
     deleteUser
 );
+
+// Following/Follower stuff
+router.post(
+    '/follow/:uuid',
+    jwt({secret: process.env.JWT_SECRET, algorithms: ['HS256']}),
+    handleJWTError,
+    followUser
+)
 
 export default router;

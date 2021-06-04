@@ -252,7 +252,10 @@ export const likePost = async (req: Request, res: Response) => {
             });
             if (req.body.likeStatus) post.likedBy.push(user);
             else {
-                post.likedBy.splice(post.likedBy.indexOf(user), 1);
+                const index = post.likedBy.map((_u: User) => {
+                    return _u.uuid
+                }).indexOf(user.uuid);
+                if (index !== -1) post.likedBy.splice(index, 1);
             }
             await postRepository.save(post);
             await removePostCache();
