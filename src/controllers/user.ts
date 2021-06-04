@@ -16,31 +16,28 @@ const removeUserCache = async () => {
     });
 }
 
+const parseFollow = (follow: User[]) => {
+    const follows = [];
+    follow.forEach((_follow: User) => {
+        follows.push({
+            uuid: _follow.uuid,
+            name: _follow.name,
+        });
+    });
+    return follows;
+}
+
 const parseUsers = (users: User[]) => {
     const returnVal = [];
     users.forEach((user: User) => {
-        const followers = [];
-        user.followers.forEach((_follower: User) => {
-            followers.push({
-                uuid: _follower.uuid,
-                name: _follower.name,
-            });
-        });
-        const following = [];
-        user.following.forEach((_following: User) => {
-            following.push({
-                uuid: _following.uuid,
-                name: _following.name,
-            });
-        });
         returnVal.push({
             uuid: user.uuid,
             name: user.name,
             username: user.username,
             bio: user.bio,
             profilePicturePath: user.profilePicturePath,
-            followers: followers,
-            following: following,
+            followers: parseFollow(user.followers),
+            following: parseFollow(user.following),
         });
     });
     return returnVal;
@@ -151,20 +148,6 @@ export const getOwnUser = async (req: Request, res: Response) => {
                 milliseconds: 300000
             }
         });
-        const followers = [];
-        user.followers.forEach((_follower: User) => {
-            followers.push({
-                uuid: _follower.uuid,
-                name: _follower.name,
-            });
-        });
-        const following = [];
-        user.following.forEach((_following: User) => {
-            following.push({
-                uuid: _following.uuid,
-                name: _following.name,
-            });
-        });
         res.json({
             error_code: api_error_code.no_error,
             message: "User fetched successfully.",
@@ -175,8 +158,8 @@ export const getOwnUser = async (req: Request, res: Response) => {
                 email: user.email,
                 bio: user.bio,
                 profilePicturePath: user.profilePicturePath,
-                followers: followers,
-                following: following,
+                followers: parseFollow(user.followers),
+                following: parseFollow(user.following),
             }
         });
     } catch (e) {
@@ -202,20 +185,6 @@ export const getUserByUUID = async (req: Request, res: Response) => {
                 milliseconds: 300000
             }
         });
-        const followers = [];
-        user.followers.forEach((_follower: User) => {
-            followers.push({
-                uuid: _follower.uuid,
-                name: _follower.name,
-            });
-        });
-        const following = [];
-        user.following.forEach((_following: User) => {
-            following.push({
-                uuid: _following.uuid,
-                name: _following.name,
-            });
-        });
         res.json({
             error_code: api_error_code.no_error,
             message: "User fetched successfully.",
@@ -225,8 +194,8 @@ export const getUserByUUID = async (req: Request, res: Response) => {
                 username: user.username,
                 bio: user.bio,
                 profilePicturePath: user.profilePicturePath,
-                followers: followers,
-                following: following
+                followers: parseFollow(user.followers),
+                following: parseFollow(user.following)
             }
         });
     } catch (e) {
