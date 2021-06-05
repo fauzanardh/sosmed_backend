@@ -7,6 +7,7 @@ import {api_error_code, http_status, postgres_error_codes} from "../const/status
 import {ValidationError} from "class-validator";
 import {removeUserCache} from "../utils/redis";
 import {parseFollow, parsePosts, parseUsers} from "../utils/models";
+import {handleErrors} from "../utils/errors";
 
 export const createUser = async (req: Request, res: Response) => {
     if (req.body.name && req.body.username && req.body.password) {
@@ -88,14 +89,7 @@ export const getUsers = async (req: Request, res: Response) => {
             data: parseUsers(users)
         });
     } catch (e) {
-        res.status(http_status.error).json({
-            error_code: api_error_code.unknown_error,
-            message: "Something went wrong.",
-            data: {
-                error_name: e.name,
-                error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
-            }
-        });
+        handleErrors(e, res);
     }
 }
 
@@ -117,7 +111,7 @@ export const getOwnUser = async (req: Request, res: Response) => {
             error_code: api_error_code.no_error,
             message: "User fetched successfully.",
             data: {
-                uuid: user.uuid,
+                id: user.uuid,
                 name: user.name,
                 username: user.username,
                 email: user.email,
@@ -129,14 +123,7 @@ export const getOwnUser = async (req: Request, res: Response) => {
             }
         });
     } catch (e) {
-        res.status(http_status.not_found).json({
-            error_code: api_error_code.sql_error,
-            message: "Something went wrong when querying the data.",
-            data: {
-                error_name: e.name,
-                error_detail: "User not found.",
-            }
-        });
+        handleErrors(e, res);
     }
 }
 
@@ -155,7 +142,7 @@ export const getUserByUUID = async (req: Request, res: Response) => {
             error_code: api_error_code.no_error,
             message: "User fetched successfully.",
             data: {
-                uuid: user.uuid,
+                id: user.uuid,
                 name: user.name,
                 username: user.username,
                 bio: user.bio,
@@ -166,14 +153,7 @@ export const getUserByUUID = async (req: Request, res: Response) => {
             }
         });
     } catch (e) {
-        res.status(http_status.not_found).json({
-            error_code: api_error_code.sql_error,
-            message: "Something went wrong when querying the data.",
-            data: {
-                error_name: e.name,
-                error_detail: "User not found.",
-            }
-        });
+        handleErrors(e, res);
     }
 }
 
@@ -201,14 +181,7 @@ export const searchUser = async (req: Request, res: Response) => {
             data: parseUsers(users)
         });
     } catch (e) {
-        res.status(http_status.not_found).json({
-            error_code: api_error_code.sql_error,
-            message: "Something went wrong when querying the data.",
-            data: {
-                error_name: e.name,
-                error_detail: "User not found.",
-            }
-        });
+        handleErrors(e, res);
     }
 }
 
@@ -233,7 +206,7 @@ export const updateUser = async (req: Request, res: Response) => {
                         error_code: api_error_code.no_error,
                         message: "Updated successfully.",
                         data: {
-                            uuid: user.uuid,
+                            id: user.uuid,
                             name: user.name,
                             username: user.username,
                             bio: user.bio,
@@ -257,31 +230,7 @@ export const updateUser = async (req: Request, res: Response) => {
         }
 
     } catch (e) {
-        if (e instanceof Array) {
-            const constraints = [];
-            e.forEach((_e) => {
-                if (_e instanceof ValidationError) {
-                    constraints.push({property: _e.property, constraint: _e.constraints})
-                }
-            });
-            res.status(http_status.bad).json({
-                error_code: api_error_code.validation_error,
-                message: "Something went wrong when validating the input.",
-                data: {
-                    error_name: "ValidationError",
-                    error_detail: constraints
-                }
-            });
-        } else {
-            res.status(http_status.error).json({
-                error_code: api_error_code.sql_error,
-                message: "Something went wrong.",
-                data: {
-                    error_name: e.name,
-                    error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
-                }
-            });
-        }
+        handleErrors(e, res);
     }
 }
 
@@ -298,14 +247,7 @@ export const deleteUser = async (req: Request, res: Response) => {
             data: {}
         });
     } catch (e) {
-        res.status(http_status.error).json({
-            error_code: api_error_code.sql_error,
-            message: "Something went wrong.",
-            data: {
-                error_name: e.name,
-                error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
-            }
-        });
+        handleErrors(e, res);
     }
 }
 
@@ -392,14 +334,7 @@ export const followUser = async (req: Request, res: Response) => {
             }
         }
     } catch (e) {
-        res.status(http_status.error).json({
-            error_code: api_error_code.sql_error,
-            message: "Something went wrong.",
-            data: {
-                error_name: e.name,
-                error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
-            }
-        });
+        handleErrors(e, res);
     }
 }
 

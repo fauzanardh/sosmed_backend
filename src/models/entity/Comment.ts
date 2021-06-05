@@ -7,7 +7,6 @@ import {
     BeforeUpdate,
     ManyToOne,
     JoinTable,
-    OneToMany,
     ManyToMany
 } from "typeorm";
 import {IsDefined, validateOrReject} from "class-validator";
@@ -20,10 +19,6 @@ export class Comment extends BaseEntity {
     @PrimaryGeneratedColumn("uuid")
     uuid: string;
 
-    @Column({length: 255})
-    @IsDefined()
-    text: string;
-
     @ManyToOne(
         () => User,
         (user: User) => user.comments,
@@ -32,23 +27,23 @@ export class Comment extends BaseEntity {
     @IsDefined()
     author: User;
 
+    @Column({length: 255, unique: true})
+    dataId: string;
+
+    @Column({length: 255})
+    text: string;
+
     @ManyToMany(() => User)
     @JoinTable()
     likedBy: User[];
 
-    @OneToMany(
-        () => Comment,
-        (comment: Comment) => comment.parent,
-    )
-    comments: Comment[];
-
     @ManyToOne(
-        () => Post || Comment,
-        (parent: Post | Comment) => parent.comments,
+        () => Post,
+        (parent: Post) => parent.comments,
         {nullable: false}
     )
     @IsDefined()
-    parent: Post | Comment;
+    parent: Post;
 
     @BeforeInsert()
     @BeforeUpdate()

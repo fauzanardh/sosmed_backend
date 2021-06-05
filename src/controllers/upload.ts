@@ -1,7 +1,8 @@
 import {Request, Response} from "express";
-import {api_error_code, http_status, postgres_error_codes} from "../const/status";
+import {api_error_code, http_status} from "../const/status";
 import {resizeAndConvertGif, resizeAndConvertImage} from "../utils/data";
 import {unlinkSync} from "fs";
+import {handleErrors} from "../utils/errors";
 
 const allowed_extensions = ["jpg", "jpeg", "png", "gif", "webp", "bmp"];
 
@@ -26,7 +27,7 @@ export const upload = async (req: Request, res: Response) => {
                     error_code: api_error_code.no_error,
                     message: "Uploaded successfully.",
                     data: {
-                        imageId: req.file.filename,
+                        dataId: req.file.filename,
                     },
                 });
             } else {
@@ -46,14 +47,6 @@ export const upload = async (req: Request, res: Response) => {
             });
         }
     } catch (e) {
-        console.warn(e);
-        res.status(http_status.error).json({
-            error_code: api_error_code.sql_error,
-            message: "Something went wrong.",
-            data: {
-                error_name: e.name,
-                error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
-            }
-        });
+        handleErrors(e, res);
     }
 }

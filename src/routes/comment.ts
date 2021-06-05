@@ -1,37 +1,28 @@
 import {Router} from "express";
 import jwt from "express-jwt";
 import {handleJWTError} from "../middlewares/jwt";
-import {createPost, getOwnPosts, getPostsByUserUUID, getPostByUUID, likePost, deletePost} from "../controllers/post";
+import {createComment, getCommentByUUID, likeComment, deleteComment} from "../controllers/comment";
 
 const router = Router();
 
-router.get(
+router.get('/:uuid', getCommentByUUID);
+router.post(
+    '/:uuid/like',
+    jwt({secret: process.env.JWT_SECRET, algorithms: ['HS256']}),
+    handleJWTError,
+    likeComment,
+);
+router.post(
     '/',
     jwt({secret: process.env.JWT_SECRET, algorithms: ['HS256']}),
     handleJWTError,
-    getOwnPosts,
+    createComment,
 );
-router.get('/userId/:uuid', getPostsByUserUUID);
-router.get('/postId/:uuid', getPostByUUID);
-
-router.post(
-    '/',
-    jwt({secret: process.env.JWT_SECRET, algorithms: ['HS256']}),
-    handleJWTError,
-    createPost,
-);
-router.post(
-    '/postId/:uuid/like',
-    jwt({secret: process.env.JWT_SECRET, algorithms: ['HS256']}),
-    handleJWTError,
-    likePost,
-)
-
 router.delete(
-    '/postId/:uuid',
+    '/:uuid',
     jwt({secret: process.env.JWT_SECRET, algorithms: ['HS256']}),
     handleJWTError,
-    deletePost,
+    deleteComment,
 )
 
 export default router;

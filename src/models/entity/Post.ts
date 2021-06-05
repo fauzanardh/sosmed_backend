@@ -20,10 +20,6 @@ export class Post extends BaseEntity {
     @PrimaryGeneratedColumn("uuid")
     uuid: string;
 
-    @Column({length: 255, unique: true})
-    @IsDefined()
-    imageId: string;
-
     @ManyToOne(
         () => User,
         (author: User) => author.posts,
@@ -31,6 +27,10 @@ export class Post extends BaseEntity {
     )
     @IsDefined()
     author: User;
+
+    @Column({length: 255, unique: true})
+    @IsDefined()
+    dataId: string;
 
     @Column({length: 255})
     @IsOptional()

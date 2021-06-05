@@ -25,3 +25,16 @@ export const removePostCache = async () => {
         });
     });
 }
+
+export const removeCommentCache = async () => {
+    const stream = rClient.scanStream({match: 'table_comment_*'})
+    stream.on('data', (keys) => {
+        keys.forEach((key) => {
+            try {
+                rClient.del(key);
+            } catch (e) {
+                console.warn(e);
+            }
+        });
+    });
+}
