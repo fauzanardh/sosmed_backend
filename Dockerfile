@@ -3,12 +3,12 @@
 ###########
 
 # pull official base image
-FROM node:15.9.0-alpine3.10 as builder
+FROM node:current-alpine as builder
 
-# install webp stuff
+# install webp, sharp & gifsicle stuff
 RUN apk update && \
-        apk upgrade -U && \
-        apk add ca-certificates ffmpeg libwebp libwebp-tools && \
+        apk upgrade && \
+        apk add ca-certificates ffmpeg libwebp libwebp-tools automake autoconf build-base && \
         rm -rf /var/cache/*
 
 # set work directory
