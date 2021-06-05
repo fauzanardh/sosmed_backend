@@ -9,7 +9,8 @@ import indexRouter from './routes';
 import {initConnection} from "./db/connection";
 import userRouter from "./routes/user";
 import loginRouter from "./routes/login";
-import postsRouter from "./routes/post";
+import postRouter from "./routes/post";
+import imageRouter from "./routes/image"
 
 // Initialize the expressjs
 const app = express();
@@ -23,7 +24,8 @@ app.use(compression());
 app.use('', indexRouter);
 app.use('/user', userRouter);
 app.use('/login', loginRouter);
-app.use('/posts', postsRouter);
+app.use('/posts', postRouter);
+app.use('/image', imageRouter);
 
 // catch 404 and forward to error handler
 app.use((req: Request, res: Response, next: NextFunction) => {
