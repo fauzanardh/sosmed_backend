@@ -2,7 +2,7 @@ import sharp from "sharp";
 import {execFile} from "child_process";
 import {gif2webp} from "./webp_converter";
 
-const MAX_SIZE = 360;
+const MAX_SIZE = 1080;
 
 export const resizeAndConvertImage = async (input: string, output: string) => {
     try {
