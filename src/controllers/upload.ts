@@ -1,6 +1,6 @@
 import {Request, Response} from "express";
 import {api_error_code, http_status, postgres_error_codes} from "../const/status";
-import {cwebp} from "../utils/webp_converter";
+import {cwebp, gif2webp} from "../utils/webp_converter";
 import {unlinkSync} from "fs";
 
 const allowed_extensions = ["jpg", "jpeg", "png", "gif", "webp", "bmp"];
@@ -10,9 +10,14 @@ export const upload = async (req: Request, res: Response) => {
         if (typeof req.file !== "undefined") {
             // get the file extension using regex (the fastest one)
             const ext = (/[.]/.exec(req.file.originalname)) ? /[^.]+$/.exec(req.file.originalname)[0] : undefined;
-            if (typeof ext !== "undefined" && allowed_extensions.indexOf(ext) > -1) {
-                // convert the image to webp
-                await cwebp(req.file.path, `/app/nginx/assets/${req.file.filename}.webp`);
+            const index = allowed_extensions.indexOf(ext);
+            if (typeof ext !== "undefined" && index > -1) {
+                // convert the image/gif to webp
+                if (allowed_extensions[index] === "gif") {
+                    await gif2webp(req.file.path, `/app/nginx/assets/${req.file.filename}.webp`);
+                } else {
+                    await cwebp(req.file.path, `/app/nginx/assets/${req.file.filename}.webp`);
+                }
                 // remove temp file
                 unlinkSync(req.file.path);
                 res.json({
