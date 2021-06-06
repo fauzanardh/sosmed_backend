@@ -21,7 +21,7 @@ export const parseUsers = (users: User[]) => {
             name: user.name,
             username: user.username,
             bio: user.bio,
-            profilePicturePath: user.profilePicturePath,
+            profilePictureDataId: user.profilePictureDataId,
             followers: parseFollow(user.followers),
             following: parseFollow(user.following),
         });

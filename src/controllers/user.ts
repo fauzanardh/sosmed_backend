@@ -115,7 +115,7 @@ export const getOwnUser = async (req: Request, res: Response) => {
                 username: user.username,
                 email: user.email,
                 bio: user.bio,
-                profilePicturePath: user.profilePicturePath,
+                profilePictureDataId: user.profilePictureDataId,
                 followers: parseFollow(user.followers),
                 following: parseFollow(user.following),
                 posts: parsePosts(user.posts),
@@ -145,7 +145,7 @@ export const getUserByUUID = async (req: Request, res: Response) => {
                 name: user.name,
                 username: user.username,
                 bio: user.bio,
-                profilePicturePath: user.profilePicturePath,
+                profilePictureDataId: user.profilePictureDataId,
                 followers: parseFollow(user.followers),
                 following: parseFollow(user.following),
                 posts: parsePosts(user.posts),
@@ -181,7 +181,7 @@ export const updateUser = async (req: Request, res: Response) => {
                             name: user.name,
                             username: user.username,
                             bio: user.bio,
-                            profilePicturePath: user.profilePicturePath,
+                            profilePictureDataId: user.profilePictureDataId,
                         }
                     });
                 }

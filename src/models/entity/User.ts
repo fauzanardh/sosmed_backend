@@ -43,7 +43,7 @@ export class User extends BaseEntity {
 
     @Column({nullable: true})
     @IsOptional()
-    profilePicturePath: string;
+    profilePictureDataId: string;
 
     @ManyToMany(() => User)
     @JoinTable()
