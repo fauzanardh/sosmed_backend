@@ -14,14 +14,14 @@ import {User} from "./User";
 import {Post} from "./Post";
 
 @Entity()
-export class Comment extends BaseEntity {
+export class Reply extends BaseEntity {
 
     @PrimaryGeneratedColumn("uuid")
     uuid: string;
 
     @ManyToOne(
         () => User,
-        (user: User) => user.comments,
+        (user: User) => user.replies,
         {nullable: false}
     )
     @IsDefined()
@@ -39,7 +39,7 @@ export class Comment extends BaseEntity {
 
     @ManyToOne(
         () => Post,
-        (parent: Post) => parent.comments,
+        (parent: Post) => parent.replies,
         {nullable: false}
     )
     @IsDefined()

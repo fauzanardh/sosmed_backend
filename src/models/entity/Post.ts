@@ -12,7 +12,7 @@ import {
 } from "typeorm";
 import {validateOrReject, IsOptional, IsDefined} from 'class-validator';
 import {User} from "./User";
-import {Comment} from "./Comment";
+import {Reply} from "./Reply";
 
 @Entity()
 export class Post extends BaseEntity {
@@ -41,10 +41,10 @@ export class Post extends BaseEntity {
     likedBy: User[];
 
     @OneToMany(
-        () => Comment,
-        (comment: Comment) => comment.parent,
+        () => Reply,
+        (reply: Reply) => reply.parent,
     )
-    comments: Comment[];
+    replies: Reply[];
 
     @BeforeInsert()
     @BeforeUpdate()

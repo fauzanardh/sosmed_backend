@@ -10,7 +10,7 @@ import {
     JoinTable
 } from "typeorm";
 import {validateOrReject, IsOptional, IsDefined, IsEmail, IsAlphanumeric} from 'class-validator';
-import {Comment} from "./Comment";
+import {Reply} from "./Reply";
 import {Post} from "./Post";
 
 @Entity()
@@ -54,10 +54,10 @@ export class User extends BaseEntity {
     followers: User[];
 
     @OneToMany(
-        () => Comment,
-        (comment: Comment) => comment.author
+        () => Reply,
+        (reply: Reply) => reply.author
     )
-    comments: Comment[];
+    replies: Reply[];
 
     @OneToMany(
         () => Post,

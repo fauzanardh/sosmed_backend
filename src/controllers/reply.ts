@@ -1,21 +1,18 @@
 import {Request, Response} from "express";
 import {getConnection} from "../db/connection";
 import {api_error_code, http_status} from "../const/status";
-import {Comment} from "../models/entity/Comment";
+import {Reply} from "../models/entity/Reply";
 import {Post} from "../models/entity/Post";
 import {User} from "../models/entity/User";
-import {purgeCommentCache, purgePostCache} from "../utils/redis";
+import {purgeReplyCache, purgePostCache} from "../utils/redis";
 import {parseLikedBy} from "../utils/models";
 import {handleErrors} from "../utils/errors";
 
-export const createComment = async (req: Request, res: Response) => {
+export const createReply = async (req: Request, res: Response) => {
     try {
-        // the first logical operation is actually xor
-        // because, you can't have both parentPost and parentComment
-        // using this current model
         if (req.body.parentPostId && (req.body.text || req.body.dataId)) {
             const postRepository = getConnection().getRepository(Post);
-            const commentRepository = getConnection().getRepository(Comment);
+            const replyRepository = getConnection().getRepository(Reply);
             const userRepository = getConnection().getRepository(User);
             const parent = await postRepository.findOneOrFail({
                 where: {uuid: req.body.parentPostId},
@@ -34,34 +31,32 @@ export const createComment = async (req: Request, res: Response) => {
                     milliseconds: 25000
                 }
             });
-            const newComment = new Comment();
-            newComment.author = user;
-            newComment.parent = parent;
-            if (req.body.dataId) newComment.dataId = req.body.dataId;
-            if (req.body.text) newComment.text = req.body.text;
-            await commentRepository.save(newComment);
-            await purgeCommentCache()
+            const newReply = new Reply();
+            newReply.author = user;
+            newReply.parent = parent;
+            if (req.body.dataId) newReply.dataId = req.body.dataId;
+            if (req.body.text) newReply.text = req.body.text;
+            await replyRepository.save(newReply);
+            await purgeReplyCache()
             await purgePostCache()
             res.json({
                 error_code: api_error_code.no_error,
-                message: "Successfully added a new comment.",
+                message: "Successfully added a new reply.",
                 data: {
-                    id: newComment.uuid,
-                    parentId: newComment.parent.uuid,
-                    dataId: newComment.dataId,
-                    text: newComment.text,
+                    id: newReply.uuid,
+                    parentId: newReply.parent.uuid,
+                    dataId: newReply.dataId,
+                    text: newReply.text,
                 },
             });
         } else {
             let message = "";
             if (req.body.text || req.body.dataId) message += "Required at least one to be defined (text, dataId)! "
-            if (!req.body.parentPostId !== !req.body.parentCommentId) message += "Can only have one defined (parentPostId, parentCommentId)! "
             res.status(http_status.bad).json({
                 error_code: api_error_code.no_params,
                 message: message,
                 data: {
                     parentPostId: req.body.parentPostId ? "exists" : "not found",
-                    parentCommentId: req.body.parentCommentId ? "exists" : "not found",
                     text: req.body.text ? "exists" : "not found",
                     dataId: req.body.dataId ? "exists" : "not found",
                 }
@@ -72,26 +67,26 @@ export const createComment = async (req: Request, res: Response) => {
     }
 }
 
-export const getCommentByUUID = async (req: Request, res: Response) => {
+export const getReplyByUUID = async (req: Request, res: Response) => {
     try {
-        const repository = getConnection().getRepository(Comment);
-        const comment = await repository.findOneOrFail({
+        const repository = getConnection().getRepository(Reply);
+        const reply = await repository.findOneOrFail({
             relations: ["author", "likedBy", "parent"],
             where: {uuid: req.params.uuid},
             cache: {
-                id: `table_comment_get_uuid_${req.params.uuid}`,
+                id: `table_reply_get_uuid_${req.params.uuid}`,
                 milliseconds: 25000
             }
         });
         res.json({
             error_code: api_error_code.no_error,
-            message: "Comment fetched successfully.",
+            message: "Reply fetched successfully.",
             data: {
-                id: comment.uuid,
-                parentId: comment.parent.uuid,
-                dataId: comment.dataId,
-                text: comment.text,
-                likedBy: parseLikedBy(comment.likedBy),
+                id: reply.uuid,
+                parentId: reply.parent.uuid,
+                dataId: reply.dataId,
+                text: reply.text,
+                likedBy: parseLikedBy(reply.likedBy),
             },
         });
     } catch (e) {
@@ -99,10 +94,10 @@ export const getCommentByUUID = async (req: Request, res: Response) => {
     }
 }
 
-export const likeComment = async (req: Request, res: Response) => {
+export const likeReply = async (req: Request, res: Response) => {
     try {
         const userRepository = getConnection().getRepository(User);
-        const commentRepository = getConnection().getRepository(Comment);
+        const replyRepository = getConnection().getRepository(Reply);
         // ignoring the error here since the typing doesn't work
         // @ts-ignore
         const uuid = req.user.uuid;
@@ -113,22 +108,22 @@ export const likeComment = async (req: Request, res: Response) => {
                 milliseconds: 25000
             }
         });
-        const comment = await commentRepository.findOneOrFail({
+        const reply = await replyRepository.findOneOrFail({
             relations: ["author", "likedBy"],
             where: {uuid: req.params.uuid},
             cache: {
-                id: `table_comment_get_uuid_${req.params.uuid}`,
+                id: `table_reply_get_uuid_${req.params.uuid}`,
                 milliseconds: 25000
             }
         });
-        const index = comment.likedBy.map((_u: User) => {
+        const index = reply.likedBy.map((_u: User) => {
             return _u.uuid
         }).indexOf(user.uuid);
         if (req.body.likeStatus) {
             if (index === -1) {
-                comment.likedBy.push(user);
-                await commentRepository.save(comment);
-                await purgeCommentCache();
+                reply.likedBy.push(user);
+                await replyRepository.save(reply);
+                await purgeReplyCache();
                 await purgePostCache();
                 res.json({
                     error_code: api_error_code.no_error,
@@ -144,9 +139,9 @@ export const likeComment = async (req: Request, res: Response) => {
             }
         } else {
             if (index !== -1) {
-                comment.likedBy.splice(index, 1);
-                await commentRepository.save(comment);
-                await purgeCommentCache();
+                reply.likedBy.splice(index, 1);
+                await replyRepository.save(reply);
+                await purgeReplyCache();
                 await purgePostCache();
                 res.json({
                     error_code: api_error_code.no_error,
@@ -166,23 +161,23 @@ export const likeComment = async (req: Request, res: Response) => {
     }
 }
 
-export const deleteComment = async (req: Request, res: Response) => {
+export const deleteReply = async (req: Request, res: Response) => {
     try {
-        const repository = getConnection().getRepository(Comment);
-        const comment = await repository.findOneOrFail({
+        const repository = getConnection().getRepository(Reply);
+        const reply = await repository.findOneOrFail({
             relations: ["author"],
             where: {uuid: req.params.uuid},
             cache: {
-                id: `table_comment_get_uuid_${req.params.uuid}`,
+                id: `table_reply_get_uuid_${req.params.uuid}`,
                 milliseconds: 25000
             }
         });
         // ignoring the error here since the typing doesn't work
         // @ts-ignore
         const uuid = req.user.uuid;
-        if (uuid === comment.author.uuid) {
-            await repository.delete(comment);
-            await purgeCommentCache()
+        if (uuid === reply.author.uuid) {
+            await repository.delete(reply);
+            await purgeReplyCache()
             await purgePostCache()
             res.json({
                 error_code: api_error_code.no_error,

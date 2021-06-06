@@ -10,7 +10,7 @@ import {initConnection} from "./db/connection";
 import userRouter from "./routes/user";
 import loginRouter from "./routes/login";
 import postRouter from "./routes/post";
-import commentRouter from "./routes/comment";
+import replyRouter from "./routes/reply";
 import uploadRouter from "./routes/upload";
 import searchRouter from "./routes/search";
 
@@ -27,7 +27,7 @@ app.use('', indexRouter);
 app.use('/user', userRouter);
 app.use('/login', loginRouter);
 app.use('/posts', postRouter);
-app.use('/comment', commentRouter);
+app.use('/reply', replyRouter);
 app.use('/upload', uploadRouter);
 app.use('/search', searchRouter);
 

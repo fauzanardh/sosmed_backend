@@ -21,8 +21,8 @@ export const purgePostCache = () => {
     });
 }
 
-export const purgeCommentCache = () => {
-    const stream = rClient.scanStream({match: 'table_comment_*'})
+export const purgeReplyCache = () => {
+    const stream = rClient.scanStream({match: 'table_reply_*'})
     stream.on('data', (keys) => {
         getConnection().queryResultCache.remove(keys)
             .catch((err) => {

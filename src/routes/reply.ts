@@ -1,28 +1,28 @@
 import {Router} from "express";
 import jwt from "express-jwt";
 import {handleJWTError} from "../middlewares/jwt";
-import {createComment, getCommentByUUID, likeComment, deleteComment} from "../controllers/comment";
+import {createReply, getReplyByUUID, likeReply, deleteReply} from "../controllers/reply";
 
 const router = Router();
 
-router.get('/:uuid', getCommentByUUID);
+router.get('/:uuid', getReplyByUUID);
 router.post(
     '/:uuid/like',
     jwt({secret: process.env.JWT_SECRET, algorithms: ['HS256']}),
     handleJWTError,
-    likeComment,
+    likeReply,
 );
 router.post(
     '/',
     jwt({secret: process.env.JWT_SECRET, algorithms: ['HS256']}),
     handleJWTError,
-    createComment,
+    createReply,
 );
 router.delete(
     '/:uuid',
     jwt({secret: process.env.JWT_SECRET, algorithms: ['HS256']}),
     handleJWTError,
-    deleteComment,
+    deleteReply,
 )
 
 export default router;

@@ -1,6 +1,6 @@
 import {User} from "../models/entity/User";
 import {Post} from "../models/entity/Post";
-import {Comment} from "../models/entity/Comment";
+import {Reply} from "../models/entity/Reply";
 
 export const parseFollow = (users: User[]) => {
     const returnVal = [];
@@ -40,15 +40,15 @@ export const parseLikedBy = (users: User[]) => {
     return returnVal;
 }
 
-export const parseComments = (comments: Comment[]) => {
+export const parseReplies = (replies: Reply[]) => {
     const returnVal = [];
-    comments.forEach((comment: Comment) => {
+    replies.forEach((reply: Reply) => {
         returnVal.push({
-            id: comment.uuid,
-            parentId: comment.parent.uuid,
-            dataId: comment.dataId,
-            text: comment.text,
-            likedBy: parseLikedBy(comment.likedBy),
+            id: reply.uuid,
+            parentId: reply.parent.uuid,
+            dataId: reply.dataId,
+            text: reply.text,
+            likedBy: parseLikedBy(reply.likedBy),
         });
     });
     return returnVal;
@@ -62,7 +62,7 @@ export const parsePosts = (posts: Post[]) => {
             dataId: post.dataId,
             text: post.text,
             likedBy: parseLikedBy(post.likedBy),
-            comments: parseComments(post.comments)
+            replies: parseReplies(post.replies)
         });
     });
     return returnVal;
