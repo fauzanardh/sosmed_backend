@@ -1,40 +1,32 @@
 import {client as rClient} from "../redis/rClient";
+import {getConnection} from "../db/connection";
 
-export const removeUserCache = async () => {
+export const purgeUserCache = () => {
     const stream = rClient.scanStream({match: 'table_user_*'})
     stream.on('data', (keys) => {
-        keys.forEach((key) => {
-            try {
-                rClient.del(key);
-            } catch (e) {
-                console.warn(e);
-            }
-        });
+        getConnection().queryResultCache.remove(keys)
+            .catch((err) => {
+                console.warn(err);
+            });
     });
 }
 
-export const removePostCache = async () => {
+export const purgePostCache = () => {
     const stream = rClient.scanStream({match: 'table_post_*'})
     stream.on('data', (keys) => {
-        keys.forEach((key) => {
-            try {
-                rClient.del(key);
-            } catch (e) {
-                console.warn(e);
-            }
-        });
+        getConnection().queryResultCache.remove(keys)
+            .catch((err) => {
+                console.warn(err);
+            });
     });
 }
 
-export const removeCommentCache = async () => {
+export const purgeCommentCache = () => {
     const stream = rClient.scanStream({match: 'table_comment_*'})
     stream.on('data', (keys) => {
-        keys.forEach((key) => {
-            try {
-                rClient.del(key);
-            } catch (e) {
-                console.warn(e);
-            }
-        });
+        getConnection().queryResultCache.remove(keys)
+            .catch((err) => {
+                console.warn(err);
+            });
     });
 }

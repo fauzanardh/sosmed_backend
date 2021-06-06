@@ -3,7 +3,7 @@ import {getConnection} from "../db/connection";
 import {api_error_code, http_status} from "../const/status";
 import {Post} from "../models/entity/Post";
 import {User} from "../models/entity/User";
-import {removeCommentCache, removePostCache} from "../utils/redis";
+import {purgeCommentCache, purgePostCache} from "../utils/redis";
 import {parseComments, parseLikedBy, parsePosts} from "../utils/models";
 import {handleErrors} from "../utils/errors";
 
@@ -19,7 +19,7 @@ export const createPost = async (req: Request, res: Response) => {
                 where: {uuid: uuid},
                 cache: {
                     id: `table_user_get_own_${uuid}`,
-                    milliseconds: 300000
+                    milliseconds: 25000
                 }
             });
             const newPost = new Post();
@@ -27,8 +27,8 @@ export const createPost = async (req: Request, res: Response) => {
             newPost.author = user;
             if (req.body.text) newPost.text = req.body.text;
             await postRepository.save(newPost);
-            await removeCommentCache()
-            await removePostCache()
+            await purgeCommentCache()
+            await purgePostCache()
             res.json({
                 error_code: api_error_code.no_error,
                 message: "Successfully added a new test.",
@@ -69,7 +69,7 @@ export const getOwnPosts = async (req: Request, res: Response) => {
             skip: page * limit,
             cache: {
                 id: `table_post_get_own_${uuid}`,
-                milliseconds: 300000
+                milliseconds: 25000
             }
         });
         res.json({
@@ -97,7 +97,7 @@ export const getPostsByUserUUID = async (req: Request, res: Response) => {
             skip: page * limit,
             cache: {
                 id: `table_post_get_user_uuid_${req.params.uuid}`,
-                milliseconds: 300000
+                milliseconds: 25000
             }
         });
         res.json({
@@ -120,7 +120,7 @@ export const getPostByUUID = async (req: Request, res: Response) => {
             where: {uuid: req.params.uuid},
             cache: {
                 id: `table_post_get_uuid_${req.params.uuid}`,
-                milliseconds: 300000
+                milliseconds: 25000
             }
         });
         res.json({
@@ -150,7 +150,7 @@ export const likePost = async (req: Request, res: Response) => {
             where: {uuid: uuid},
             cache: {
                 id: `table_user_get_uuid_${uuid}`,
-                milliseconds: 300000
+                milliseconds: 25000
             }
         });
         const post = await postRepository.findOneOrFail({
@@ -158,7 +158,7 @@ export const likePost = async (req: Request, res: Response) => {
             where: {uuid: req.params.uuid},
             cache: {
                 id: `table_post_get_uuid_${req.params.uuid}`,
-                milliseconds: 300000
+                milliseconds: 25000
             }
         });
         const index = post.likedBy.map((_u: User) => {
@@ -168,8 +168,8 @@ export const likePost = async (req: Request, res: Response) => {
             if (index === -1) {
                 post.likedBy.push(user);
                 await postRepository.save(post);
-                await removeCommentCache();
-                await removePostCache();
+                await purgeCommentCache();
+                await purgePostCache();
                 res.json({
                     error_code: api_error_code.no_error,
                     message: "Liked successfully.",
@@ -186,8 +186,8 @@ export const likePost = async (req: Request, res: Response) => {
             if (index !== -1) {
                 post.likedBy.splice(index, 1);
                 await postRepository.save(post);
-                await removeCommentCache();
-                await removePostCache();
+                await purgeCommentCache();
+                await purgePostCache();
                 res.json({
                     error_code: api_error_code.no_error,
                     message: "Like removed successfully.",
@@ -214,7 +214,7 @@ export const deletePost = async (req: Request, res: Response) => {
             where: {uuid: req.params.uuid},
             cache: {
                 id: `table_post_get_uuid_${req.params.uuid}`,
-                milliseconds: 300000
+                milliseconds: 25000
             }
         });
         // ignoring the error here since the typing doesn't work
@@ -222,8 +222,8 @@ export const deletePost = async (req: Request, res: Response) => {
         const uuid = req.user.uuid;
         if (uuid === post.author.uuid) {
             await repository.delete(post);
-            await removeCommentCache()
-            await removePostCache()
+            await purgeCommentCache()
+            await purgePostCache()
             res.json({
                 error_code: api_error_code.no_error,
                 message: "Post successfully deleted.",

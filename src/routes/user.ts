@@ -7,7 +7,6 @@ import {
     getUsers,
     updateUser,
     deleteUser,
-    searchUser,
     getOwnUser,
     followUser
 } from "../controllers/user";
@@ -22,7 +21,6 @@ router.get(
     getOwnUser
 );
 router.get('/:uuid', getUserByUUID);
-router.get('/search/:searchString', searchUser)
 router.post('/', createUser);
 router.patch(
     '/',

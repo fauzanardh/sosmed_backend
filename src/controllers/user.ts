@@ -1,11 +1,10 @@
 import {Request, Response} from "express";
 import bcrypt from "bcrypt";
-import {ILike} from "typeorm";
 import {User} from '../models/entity/User';
 import {getConnection} from "../db/connection";
 import {api_error_code, http_status, postgres_error_codes} from "../const/status";
 import {ValidationError} from "class-validator";
-import {removeUserCache} from "../utils/redis";
+import {purgeUserCache} from "../utils/redis";
 import {parseFollow, parsePosts, parseUsers} from "../utils/models";
 import {handleErrors} from "../utils/errors";
 
@@ -19,7 +18,7 @@ export const createUser = async (req: Request, res: Response) => {
             const salt = await bcrypt.genSalt(12);
             newUser.password = await bcrypt.hash(req.body.password, salt);
             await repository.save(newUser);
-            await removeUserCache();
+            await purgeUserCache();
             res.json({
                 error_code: api_error_code.no_error,
                 message: "Successfully added a new user.",
@@ -80,7 +79,7 @@ export const getUsers = async (req: Request, res: Response) => {
             skip: page * limit,
             cache: {
                 id: `table_user_all_users_${limit}_${page}`,
-                milliseconds: 300000
+                milliseconds: 25000
             }
         });
         res.json({
@@ -104,7 +103,7 @@ export const getOwnUser = async (req: Request, res: Response) => {
             where: {uuid: uuid},
             cache: {
                 id: `table_user_get_own_${uuid}`,
-                milliseconds: 300000
+                milliseconds: 25000
             }
         });
         res.json({
@@ -135,7 +134,7 @@ export const getUserByUUID = async (req: Request, res: Response) => {
             where: {uuid: req.params.uuid},
             cache: {
                 id: `table_user_get_uuid_${req.params.uuid}`,
-                milliseconds: 300000
+                milliseconds: 25000
             }
         });
         res.json({
@@ -151,34 +150,6 @@ export const getUserByUUID = async (req: Request, res: Response) => {
                 following: parseFollow(user.following),
                 posts: parsePosts(user.posts),
             }
-        });
-    } catch (e) {
-        handleErrors(e, res);
-    }
-}
-
-export const searchUser = async (req: Request, res: Response) => {
-    try {
-        const repository = getConnection().getRepository(User);
-        const limit = Math.min((req.query.limit) ? parseInt(req.query.limit as string, 10) : 25, 100);
-        const page = (req.query.page) ? parseInt(req.query.page as string, 10) : 0;
-        const users = await repository.find({
-            relations: ["following", "followers"],
-            where: [
-                {name: ILike(`%${req.params.searchString}%`)},
-                {username: ILike(`%${req.params.searchString}%`)}
-            ],
-            take: limit,
-            skip: page * limit,
-            cache: {
-                id: `table_user_search_${req.params.searchString}_${limit}_${page}`,
-                milliseconds: 300000
-            }
-        });
-        res.json({
-            error_code: api_error_code.no_error,
-            message: "Users fetched successfully.",
-            data: parseUsers(users)
         });
     } catch (e) {
         handleErrors(e, res);
@@ -201,7 +172,7 @@ export const updateUser = async (req: Request, res: Response) => {
                     const salt = await bcrypt.genSalt(12);
                     user.password = await bcrypt.hash(req.body.newPassword, salt);
                     await repository.save(user);
-                    await removeUserCache();
+                    await purgeUserCache();
                     res.json({
                         error_code: api_error_code.no_error,
                         message: "Updated successfully.",
@@ -240,7 +211,7 @@ export const deleteUser = async (req: Request, res: Response) => {
         // ignoring the error here since the typing doesn't work
         // @ts-ignore
         await repository.delete(req.user.uuid);
-        await removeUserCache();
+        await purgeUserCache();
         res.json({
             error_code: api_error_code.no_error,
             message: "User deleted successfully.",
@@ -269,7 +240,7 @@ export const followUser = async (req: Request, res: Response) => {
                 where: {uuid: uuid},
                 cache: {
                     id: `table_user_get_uuid_${uuid}`,
-                    milliseconds: 300000
+                    milliseconds: 25000
                 }
             });
             const userTo = await repository.findOneOrFail({
@@ -277,7 +248,7 @@ export const followUser = async (req: Request, res: Response) => {
                 where: {uuid: req.params.uuid},
                 cache: {
                     id: `table_user_get_uuid_${req.params.uuid}`,
-                    milliseconds: 300000
+                    milliseconds: 25000
                 }
             });
             if (req.body.followStatus) {
@@ -292,7 +263,7 @@ export const followUser = async (req: Request, res: Response) => {
                     userTo.followers.push(userFrom);
                     await repository.save(userTo);
                     await repository.save(userFrom);
-                    await removeUserCache();
+                    await purgeUserCache();
                     res.json({
                         error_code: api_error_code.no_error,
                         message: "User successfully followed.",
@@ -318,7 +289,7 @@ export const followUser = async (req: Request, res: Response) => {
                     userTo.followers.splice(indexTo, 1);
                     await repository.save(userFrom);
                     await repository.save(userTo);
-                    await removeUserCache();
+                    await purgeUserCache();
                     res.json({
                         error_code: api_error_code.no_error,
                         message: "User successfully unfollowed.",

@@ -33,8 +33,8 @@ const getGifSize = (input: string): Promise<GifInfo> => {
     return new Promise((resolve, reject) => {
         execFile("gifsicle", query.split(/\s+/), {shell: true}, (err, stdout, stderr) => {
             if (err) reject(stderr ? stderr : err);
-            const _regex = /logical screen (\d+)x(\d+)/gm.exec(stdout);
-            resolve({width: parseInt(_regex[1], 10), height: parseInt(_regex[2], 10)});
+            const _regex = /logical screen (?<width>\d+)x(?<height>\d+)/gm.exec(stdout);
+            resolve({width: parseInt(_regex.groups["width"], 10), height: parseInt(_regex.groups["height"], 10)});
         });
     });
 }

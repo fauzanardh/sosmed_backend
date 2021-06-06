@@ -12,6 +12,7 @@ import loginRouter from "./routes/login";
 import postRouter from "./routes/post";
 import commentRouter from "./routes/comment";
 import uploadRouter from "./routes/upload";
+import searchRouter from "./routes/search";
 
 // Initialize the expressjs
 const app = express();
@@ -28,6 +29,7 @@ app.use('/login', loginRouter);
 app.use('/posts', postRouter);
 app.use('/comment', commentRouter);
 app.use('/upload', uploadRouter);
+app.use('/search', searchRouter);
 
 // catch 404 and forward to error handler
 app.use((req: Request, res: Response, next: NextFunction) => {
