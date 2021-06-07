@@ -23,7 +23,7 @@ app.use(express.urlencoded({extended: false}));
 app.use(helmet());
 app.use(compression());
 
-app.use('', indexRouter);
+app.use('/', indexRouter);
 app.use('/user', userRouter);
 app.use('/login', loginRouter);
 app.use('/posts', postRouter);
