@@ -56,7 +56,7 @@ export const search = async (req: Request, res: Response) => {
                 });
             }
             res.json({
-                error_code: api_error_code.no_error,
+                errorCode: api_error_code.no_error,
                 message: "Search",
                 data: {
                     users: parseUsers(users),
@@ -65,7 +65,7 @@ export const search = async (req: Request, res: Response) => {
             });
         } else {
             res.status(http_status.bad).json({
-                error_code: api_error_code.no_params,
+                errorCode: api_error_code.no_params,
                 message: "Fix the required params!",
                 data: {
                     keyword: req.query.keyword ? "exists" : "not found",

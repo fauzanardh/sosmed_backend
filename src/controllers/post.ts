@@ -3,53 +3,58 @@ import {getConnection} from "../db/connection";
 import {api_error_code, http_status} from "../const/status";
 import {Post} from "../models/entity/Post";
 import {User} from "../models/entity/User";
-import {purgeReplyCache, purgePostCache} from "../utils/redis";
+import {purgeReplyCache, purgePostCache, purgeNotificationCache} from "../utils/redis";
 import {parseReplies, parseLikedBy, parsePosts} from "../utils/models";
 import {handleErrors} from "../utils/errors";
+import {Notification, NotificationType} from "../models/entity/Notification";
 
 export const createPost = async (req: Request, res: Response) => {
-    if (req.body.dataId) {
-        try {
-            const userRepository = getConnection().getRepository(User);
-            const postRepository = getConnection().getRepository(Post);
-            // ignoring the error here since the typing doesn't work
-            // @ts-ignore
-            const uuid = req.user.uuid;
-            const user = await userRepository.findOneOrFail({
-                where: {uuid: uuid},
-                cache: {
-                    id: `table_user_get_own_${uuid}`,
-                    milliseconds: 25000
+    try {
+        if (req.body.dataId) {
+            try {
+                const userRepository = getConnection().getRepository(User);
+                const postRepository = getConnection().getRepository(Post);
+                // ignoring the error here since the typing doesn't work
+                // @ts-ignore
+                const uuid = req.user.uuid;
+                const user = await userRepository.findOneOrFail({
+                    where: {uuid: uuid},
+                    cache: {
+                        id: `table_user_get_own_${uuid}`,
+                        milliseconds: 25000
+                    }
+                });
+                const newPost = new Post();
+                newPost.dataId = req.body.dataId;
+                newPost.author = user;
+                if (req.body.text) newPost.text = req.body.text;
+                await postRepository.save(newPost);
+                await purgeReplyCache()
+                await purgePostCache()
+                res.json({
+                    errorCode: api_error_code.no_error,
+                    message: "Successfully added a new test.",
+                    data: {
+                        postId: newPost.uuid,
+                        authorId: newPost.author.uuid,
+                        dataId: newPost.dataId,
+                        text: newPost.text,
+                    },
+                });
+            } catch (e) {
+                handleErrors(e, res);
+            }
+        } else {
+            res.status(http_status.bad).json({
+                errorCode: api_error_code.no_params,
+                message: "Fix the required params!",
+                data: {
+                    dataId: req.body.dataId ? "exists" : "not found",
                 }
             });
-            const newPost = new Post();
-            newPost.dataId = req.body.dataId;
-            newPost.author = user;
-            if (req.body.text) newPost.text = req.body.text;
-            await postRepository.save(newPost);
-            await purgeReplyCache()
-            await purgePostCache()
-            res.json({
-                error_code: api_error_code.no_error,
-                message: "Successfully added a new test.",
-                data: {
-                    postId: newPost.uuid,
-                    authorId: newPost.author.uuid,
-                    dataId: newPost.dataId,
-                    text: newPost.text,
-                },
-            });
-        } catch (e) {
-            handleErrors(e, res);
         }
-    } else {
-        res.status(http_status.bad).json({
-            error_code: api_error_code.no_params,
-            message: "Fix the required params!",
-            data: {
-                dataId: req.body.dataId ? "exists" : "not found",
-            }
-        });
+    } catch (e) {
+        handleErrors(e, res);
     }
 }
 
@@ -73,7 +78,7 @@ export const getOwnPosts = async (req: Request, res: Response) => {
             }
         });
         res.json({
-            error_code: api_error_code.no_error,
+            errorCode: api_error_code.no_error,
             message: "Posts fetched successfully.",
             data: {
                 posts: parsePosts(posts),
@@ -101,7 +106,7 @@ export const getPostsByUserUUID = async (req: Request, res: Response) => {
             }
         });
         res.json({
-            error_code: api_error_code.no_error,
+            errorCode: api_error_code.no_error,
             message: "Posts fetched successfully.",
             data: {
                 posts: parsePosts(posts),
@@ -124,7 +129,7 @@ export const getPostByUUID = async (req: Request, res: Response) => {
             }
         });
         res.json({
-            error_code: api_error_code.no_error,
+            errorCode: api_error_code.no_error,
             message: "Posts fetched successfully.",
             data: {
                 postId: post.uuid,
@@ -170,14 +175,29 @@ export const likePost = async (req: Request, res: Response) => {
                 await postRepository.save(post);
                 await purgeReplyCache();
                 await purgePostCache();
+                const notificationRepository = getConnection().getRepository(Notification);
+                const newNotification = new Notification();
+                newNotification.from = user;
+                newNotification.to = await userRepository.findOneOrFail({
+                    where: {uuid: req.params.uuid},
+                    cache: {
+                        id: `table_user_get_uuid_${req.params.uuid}`,
+                        milliseconds: 25000
+                    }
+                });
+                newNotification.type = NotificationType.PostLiked;
+                newNotification.message = `Your post has been liked by ${user.name}`;
+                newNotification.uuidToData = post.uuid;
+                await notificationRepository.save(newNotification);
+                await purgeNotificationCache();
                 res.json({
-                    error_code: api_error_code.no_error,
+                    errorCode: api_error_code.no_error,
                     message: "Liked successfully.",
                     data: {}
                 });
             } else {
                 res.json({
-                    error_code: api_error_code.no_error,
+                    errorCode: api_error_code.no_error,
                     message: "Already liked successfully.",
                     data: {}
                 });
@@ -189,13 +209,13 @@ export const likePost = async (req: Request, res: Response) => {
                 await purgeReplyCache();
                 await purgePostCache();
                 res.json({
-                    error_code: api_error_code.no_error,
+                    errorCode: api_error_code.no_error,
                     message: "Like removed successfully.",
                     data: {}
                 });
             } else {
                 res.json({
-                    error_code: api_error_code.no_error,
+                    errorCode: api_error_code.no_error,
                     message: "Not liked.",
                     data: {}
                 });
@@ -225,13 +245,13 @@ export const deletePost = async (req: Request, res: Response) => {
             await purgeReplyCache()
             await purgePostCache()
             res.json({
-                error_code: api_error_code.no_error,
+                errorCode: api_error_code.no_error,
                 message: "Post successfully deleted.",
                 data: {}
             });
         } else {
             res.json({
-                error_code: api_error_code.auth_error,
+                errorCode: api_error_code.auth_error,
                 message: "This user don't have the permission to delete this post.",
                 data: {}
             });

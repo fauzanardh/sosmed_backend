@@ -6,47 +6,44 @@ import {
     UpdateDateColumn,
     BaseEntity,
     BeforeInsert,
-    BeforeUpdate,
-    ManyToOne,
-    OneToMany,
-    JoinTable,
-    ManyToMany
+    BeforeUpdate, OneToOne,
 } from "typeorm";
-import {validateOrReject, IsOptional, IsDefined} from 'class-validator';
+import {validateOrReject, IsDefined, IsUUID} from 'class-validator';
 import {User} from "./User";
-import {Reply} from "./Reply";
+import {JoinColumn} from "typeorm";
+import { notification_type } from "../../const/status";
 
 @Entity()
-export class Post extends BaseEntity {
+export class Notification extends BaseEntity {
 
     @PrimaryGeneratedColumn("uuid")
     uuid: string;
 
-    @ManyToOne(
-        () => User,
-        (author: User) => author.posts,
-        {nullable: false}
-    )
+    @OneToOne(() => User)
+    @JoinColumn()
     @IsDefined()
-    author: User;
+    from: User;
 
-    @Column({length: 255, unique: true})
+    @OneToOne(() => User)
+    @JoinColumn()
     @IsDefined()
-    dataId: string;
+    to: User;
 
-    @Column({length: 255})
-    @IsOptional()
-    text: string;
+    @Column('int')
+    @IsDefined()
+    type: notification_type;
 
-    @ManyToMany(() => User)
-    @JoinTable()
-    likedBy: User[];
+    @Column()
+    @IsDefined()
+    message: string;
 
-    @OneToMany(
-        () => Reply,
-        (reply: Reply) => reply.parent,
-    )
-    replies: Reply[];
+    @Column()
+    @IsUUID()
+    @IsDefined()
+    uuidToData: string;
+
+    @Column({default: false})
+    isRead: boolean;
 
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
     createdAt: Date;

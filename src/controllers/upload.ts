@@ -24,7 +24,7 @@ export const upload = async (req: Request, res: Response) => {
                 // remove temp file
                 unlinkSync(req.file.path);
                 res.json({
-                    error_code: api_error_code.no_error,
+                    errorCode: api_error_code.no_error,
                     message: "Uploaded successfully.",
                     data: {
                         dataId: req.file.filename,
@@ -32,7 +32,7 @@ export const upload = async (req: Request, res: Response) => {
                 });
             } else {
                 res.status(http_status.bad).json({
-                    error_code: api_error_code.image_error,
+                    errorCode: api_error_code.image_error,
                     message: "Image upload failed, extension not allowed!",
                     data: {
                         allowed_extensions: allowed_extensions,
@@ -41,7 +41,7 @@ export const upload = async (req: Request, res: Response) => {
             }
         } else {
             res.status(http_status.bad).json({
-                error_code: api_error_code.image_error,
+                errorCode: api_error_code.image_error,
                 message: "Image upload failed.",
                 data: {},
             });

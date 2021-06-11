@@ -4,9 +4,10 @@ import {api_error_code, http_status} from "../const/status";
 import {Reply} from "../models/entity/Reply";
 import {Post} from "../models/entity/Post";
 import {User} from "../models/entity/User";
-import {purgeReplyCache, purgePostCache} from "../utils/redis";
+import {purgeReplyCache, purgePostCache, purgeNotificationCache} from "../utils/redis";
 import {parseLikedBy} from "../utils/models";
 import {handleErrors} from "../utils/errors";
+import {Notification, NotificationType} from "../models/entity/Notification";
 
 export const createReply = async (req: Request, res: Response) => {
     try {
@@ -15,6 +16,7 @@ export const createReply = async (req: Request, res: Response) => {
             const replyRepository = getConnection().getRepository(Reply);
             const userRepository = getConnection().getRepository(User);
             const parent = await postRepository.findOneOrFail({
+                relations: ["author"],
                 where: {uuid: req.body.parentPostId},
                 cache: {
                     id: `table_post_get_uuid_${req.body.parentPostId}`,
@@ -37,10 +39,25 @@ export const createReply = async (req: Request, res: Response) => {
             if (req.body.dataId) newReply.dataId = req.body.dataId;
             if (req.body.text) newReply.text = req.body.text;
             await replyRepository.save(newReply);
-            await purgeReplyCache()
-            await purgePostCache()
+            await purgeReplyCache();
+            await purgePostCache();
+            const notificationRepository = getConnection().getRepository(Notification);
+            const newNotification = new Notification();
+            newNotification.from = user;
+            newNotification.to = await userRepository.findOneOrFail({
+                where: {uuid: parent.author.uuid},
+                cache: {
+                    id: `table_user_get_uuid_${parent.author.uuid}`,
+                    milliseconds: 25000
+                }
+            });
+            newNotification.type = NotificationType.NewReply;
+            newNotification.message = `You have a new reply by ${user.name}`;
+            newNotification.uuidToData = parent.uuid;
+            await notificationRepository.save(newNotification);
+            await purgeNotificationCache();
             res.json({
-                error_code: api_error_code.no_error,
+                errorCode: api_error_code.no_error,
                 message: "Successfully added a new reply.",
                 data: {
                     id: newReply.uuid,
@@ -53,7 +70,7 @@ export const createReply = async (req: Request, res: Response) => {
             let message = "";
             if (req.body.text || req.body.dataId) message += "Required at least one to be defined (text, dataId)! "
             res.status(http_status.bad).json({
-                error_code: api_error_code.no_params,
+                errorCode: api_error_code.no_params,
                 message: message,
                 data: {
                     parentPostId: req.body.parentPostId ? "exists" : "not found",
@@ -79,7 +96,7 @@ export const getReplyByUUID = async (req: Request, res: Response) => {
             }
         });
         res.json({
-            error_code: api_error_code.no_error,
+            errorCode: api_error_code.no_error,
             message: "Reply fetched successfully.",
             data: {
                 id: reply.uuid,
@@ -125,14 +142,29 @@ export const likeReply = async (req: Request, res: Response) => {
                 await replyRepository.save(reply);
                 await purgeReplyCache();
                 await purgePostCache();
+                const notificationRepository = getConnection().getRepository(Notification);
+                const newNotification = new Notification();
+                newNotification.from = user;
+                newNotification.to = await userRepository.findOneOrFail({
+                    where: {uuid: req.params.uuid},
+                    cache: {
+                        id: `table_user_get_uuid_${req.params.uuid}`,
+                        milliseconds: 25000
+                    }
+                });
+                newNotification.type = NotificationType.ReplyLiked;
+                newNotification.message = `Your reply has been liked by ${user.name}`;
+                newNotification.uuidToData = reply.uuid;
+                await notificationRepository.save(newNotification);
+                await purgeNotificationCache();
                 res.json({
-                    error_code: api_error_code.no_error,
+                    errorCode: api_error_code.no_error,
                     message: "Liked successfully.",
                     data: {}
                 });
             } else {
                 res.json({
-                    error_code: api_error_code.no_error,
+                    errorCode: api_error_code.no_error,
                     message: "Already liked successfully.",
                     data: {}
                 });
@@ -144,13 +176,13 @@ export const likeReply = async (req: Request, res: Response) => {
                 await purgeReplyCache();
                 await purgePostCache();
                 res.json({
-                    error_code: api_error_code.no_error,
+                    errorCode: api_error_code.no_error,
                     message: "Like removed successfully.",
                     data: {}
                 });
             } else {
                 res.json({
-                    error_code: api_error_code.no_error,
+                    errorCode: api_error_code.no_error,
                     message: "Not liked.",
                     data: {}
                 });
@@ -180,13 +212,13 @@ export const deleteReply = async (req: Request, res: Response) => {
             await purgeReplyCache()
             await purgePostCache()
             res.json({
-                error_code: api_error_code.no_error,
+                errorCode: api_error_code.no_error,
                 message: "Post successfully deleted.",
                 data: {}
             });
         } else {
             res.json({
-                error_code: api_error_code.auth_error,
+                errorCode: api_error_code.auth_error,
                 message: "This user don't have the permission to delete this post.",
                 data: {}
             });

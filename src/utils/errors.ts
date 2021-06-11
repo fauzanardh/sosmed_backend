@@ -1,5 +1,5 @@
 import {EntityNotFoundError} from "typeorm";
-import {api_error_code, http_status, postgres_error_codes} from "../const/status";
+import {api_error_code, http_status} from "../const/status";
 import {Response} from "express";
 import {ValidationError} from "class-validator";
 
@@ -13,27 +13,21 @@ export const handleErrors = (e, res: Response) => {
             }
         });
         res.status(http_status.bad).json({
-            error_code: api_error_code.validation_error,
+            errorCode: api_error_code.validation_error,
             message: "Something went wrong when validating the input.",
-            data: {
-                error_name: "ValidationError",
-                error_detail: constraints
-            }
+            data: {}
         });
     } else if (e instanceof EntityNotFoundError) {
         res.status(http_status.not_found).json({
-            error_code: api_error_code.sql_error,
+            errorCode: api_error_code.sql_error,
             message: "Requested entity not found.",
             data: {}
         });
     } else {
         res.status(http_status.error).json({
-            error_code: api_error_code.sql_error,
+            errorCode: api_error_code.sql_error,
             message: "Something went wrong.",
-            data: {
-                error_name: e.name,
-                error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
-            }
+            data: {}
         });
     }
 }

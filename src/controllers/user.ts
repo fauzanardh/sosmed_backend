@@ -4,66 +4,71 @@ import {User} from '../models/entity/User';
 import {getConnection} from "../db/connection";
 import {api_error_code, http_status, postgres_error_codes} from "../const/status";
 import {ValidationError} from "class-validator";
-import {purgeUserCache} from "../utils/redis";
+import {purgeNotificationCache, purgeUserCache} from "../utils/redis";
 import {parseFollow, parsePosts, parseUsers} from "../utils/models";
 import {handleErrors} from "../utils/errors";
+import {Notification, NotificationType} from "../models/entity/Notification";
 
 export const createUser = async (req: Request, res: Response) => {
-    if (req.body.name && req.body.username && req.body.password) {
-        try {
-            const repository = getConnection().getRepository(User);
-            const newUser = new User();
-            newUser.name = req.body.name;
-            newUser.username = req.body.username;
-            const salt = await bcrypt.genSalt(12);
-            newUser.password = await bcrypt.hash(req.body.password, salt);
-            await repository.save(newUser);
-            await purgeUserCache();
-            res.json({
-                error_code: api_error_code.no_error,
-                message: "Successfully added a new user.",
+    try {
+        if (req.body.name && req.body.username && req.body.password) {
+            try {
+                const repository = getConnection().getRepository(User);
+                const newUser = new User();
+                newUser.name = req.body.name;
+                newUser.username = req.body.username;
+                const salt = await bcrypt.genSalt(12);
+                newUser.password = await bcrypt.hash(req.body.password, salt);
+                await repository.save(newUser);
+                await purgeUserCache();
+                res.json({
+                    errorCode: api_error_code.no_error,
+                    message: "Successfully added a new user.",
+                    data: {
+                        id: newUser.uuid,
+                        name: newUser.username,
+                    },
+                });
+            } catch (e) {
+                if (e instanceof Array) {
+                    const constraints = [];
+                    e.forEach((_e) => {
+                        if (_e instanceof ValidationError) {
+                            constraints.push({property: _e.property, constraint: _e.constraints})
+                        }
+                    });
+                    res.status(http_status.bad).json({
+                        errorCode: api_error_code.validation_error,
+                        message: "Something went wrong when validating the input.",
+                        data: {
+                            errorName: "ValidationError",
+                            errorDetail: constraints
+                        }
+                    });
+                } else {
+                    res.status(http_status.error).json({
+                        errorCode: api_error_code.sql_error,
+                        message: "Something went wrong.",
+                        data: {
+                            errorName: e.name,
+                            errorDetail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
+                        }
+                    });
+                }
+            }
+        } else {
+            res.status(http_status.bad).json({
+                errorCode: api_error_code.no_params,
+                message: "Fix the required params!",
                 data: {
-                    id: newUser.uuid,
-                    name: newUser.username,
-                },
+                    name: req.body.name ? "exists" : "not found",
+                    username: req.body.username ? "exists" : "not found",
+                    password: req.body.password ? "exists" : "not found",
+                }
             });
-        } catch (e) {
-            if (e instanceof Array) {
-                const constraints = [];
-                e.forEach((_e) => {
-                    if (_e instanceof ValidationError) {
-                        constraints.push({property: _e.property, constraint: _e.constraints})
-                    }
-                });
-                res.status(http_status.bad).json({
-                    error_code: api_error_code.validation_error,
-                    message: "Something went wrong when validating the input.",
-                    data: {
-                        error_name: "ValidationError",
-                        error_detail: constraints
-                    }
-                });
-            } else {
-                res.status(http_status.error).json({
-                    error_code: api_error_code.sql_error,
-                    message: "Something went wrong.",
-                    data: {
-                        error_name: e.name,
-                        error_detail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
-                    }
-                });
-            }
         }
-    } else {
-        res.status(http_status.bad).json({
-            error_code: api_error_code.no_params,
-            message: "Fix the required params!",
-            data: {
-                name: req.body.name ? "exists" : "not found",
-                username: req.body.username ? "exists" : "not found",
-                password: req.body.password ? "exists" : "not found",
-            }
-        });
+    } catch (e) {
+        handleErrors(e, res);
     }
 }
 
@@ -83,7 +88,7 @@ export const getUsers = async (req: Request, res: Response) => {
             }
         });
         res.json({
-            error_code: api_error_code.no_error,
+            errorCode: api_error_code.no_error,
             message: "Users fetched successfully.",
             data: parseUsers(users)
         });
@@ -107,7 +112,7 @@ export const getOwnUser = async (req: Request, res: Response) => {
             }
         });
         res.json({
-            error_code: api_error_code.no_error,
+            errorCode: api_error_code.no_error,
             message: "User fetched successfully.",
             data: {
                 id: user.uuid,
@@ -138,7 +143,7 @@ export const getUserByUUID = async (req: Request, res: Response) => {
             }
         });
         res.json({
-            error_code: api_error_code.no_error,
+            errorCode: api_error_code.no_error,
             message: "User fetched successfully.",
             data: {
                 id: user.uuid,
@@ -174,7 +179,7 @@ export const updateUser = async (req: Request, res: Response) => {
                     await repository.save(user);
                     await purgeUserCache();
                     res.json({
-                        error_code: api_error_code.no_error,
+                        errorCode: api_error_code.no_error,
                         message: "Updated successfully.",
                         data: {
                             id: user.uuid,
@@ -187,14 +192,14 @@ export const updateUser = async (req: Request, res: Response) => {
                 }
             } else {
                 res.json({
-                    error_code: api_error_code.auth_error,
+                    errorCode: api_error_code.auth_error,
                     message: "Wrong current password!",
                     data: {}
                 });
             }
         } else {
             res.json({
-                error_code: api_error_code.auth_error,
+                errorCode: api_error_code.auth_error,
                 message: "Current password is not provided!",
                 data: {}
             });
@@ -213,7 +218,7 @@ export const deleteUser = async (req: Request, res: Response) => {
         await repository.delete(req.user.uuid);
         await purgeUserCache();
         res.json({
-            error_code: api_error_code.no_error,
+            errorCode: api_error_code.no_error,
             message: "User deleted successfully.",
             data: {}
         });
@@ -230,7 +235,7 @@ export const followUser = async (req: Request, res: Response) => {
         const uuid = req.user.uuid;
         if (uuid === req.params.uuid) {
             res.status(http_status.error).json({
-                error_code: api_error_code.validation_error,
+                errorCode: api_error_code.validation_error,
                 message: "Can't follow yourself.",
                 data: {}
             });
@@ -264,14 +269,23 @@ export const followUser = async (req: Request, res: Response) => {
                     await repository.save(userTo);
                     await repository.save(userFrom);
                     await purgeUserCache();
+                    const notificationRepository = getConnection().getRepository(Notification);
+                    const newNotification = new Notification();
+                    newNotification.from = userFrom;
+                    newNotification.to = userTo;
+                    newNotification.type = NotificationType.NewFollower;
+                    newNotification.message = `You have been followed by ${userFrom.name}`;
+                    newNotification.uuidToData = userTo.uuid;
+                    await notificationRepository.save(newNotification);
+                    await purgeNotificationCache();
                     res.json({
-                        error_code: api_error_code.no_error,
+                        errorCode: api_error_code.no_error,
                         message: "User successfully followed.",
                         data: {}
                     });
                 } else {
                     res.json({
-                        error_code: api_error_code.no_error,
+                        errorCode: api_error_code.no_error,
                         message: "User already followed.",
                         data: {}
                     });
@@ -291,13 +305,13 @@ export const followUser = async (req: Request, res: Response) => {
                     await repository.save(userTo);
                     await purgeUserCache();
                     res.json({
-                        error_code: api_error_code.no_error,
+                        errorCode: api_error_code.no_error,
                         message: "User successfully unfollowed.",
                         data: {}
                     });
                 } else {
                     res.json({
-                        error_code: api_error_code.no_error,
+                        errorCode: api_error_code.no_error,
                         message: "User not followed.",
                         data: {}
                     });

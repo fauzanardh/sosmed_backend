@@ -13,6 +13,7 @@ import postRouter from "./routes/post";
 import replyRouter from "./routes/reply";
 import uploadRouter from "./routes/upload";
 import searchRouter from "./routes/search";
+import notificationRouter from "./routes/notification";
 
 // Initialize the expressjs
 const app = express();
@@ -30,6 +31,7 @@ app.use('/posts', postRouter);
 app.use('/reply', replyRouter);
 app.use('/upload', uploadRouter);
 app.use('/search', searchRouter);
+app.use('/notification', notificationRouter);
 
 // catch 404 and forward to error handler
 app.use((req: Request, res: Response, next: NextFunction) => {

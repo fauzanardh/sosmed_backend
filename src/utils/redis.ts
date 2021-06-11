@@ -30,3 +30,13 @@ export const purgeReplyCache = () => {
             });
     });
 }
+
+export const purgeNotificationCache = () => {
+    const stream = rClient.scanStream({match: 'table_notification_*'})
+    stream.on('data', (keys) => {
+        getConnection().queryResultCache.remove(keys)
+            .catch((err) => {
+                console.warn(err);
+            });
+    });
+}

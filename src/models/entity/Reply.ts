@@ -7,7 +7,7 @@ import {
     BeforeUpdate,
     ManyToOne,
     JoinTable,
-    ManyToMany
+    ManyToMany, CreateDateColumn, UpdateDateColumn
 } from "typeorm";
 import {IsDefined, validateOrReject} from "class-validator";
 import {User} from "./User";
@@ -44,6 +44,12 @@ export class Reply extends BaseEntity {
     )
     @IsDefined()
     parent: Post;
+
+    @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+    createdAt: Date;
+
+    @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP", onUpdate: "CURRENT_TIMESTAMP" })
+    updatedAt: Date;
 
     @BeforeInsert()
     @BeforeUpdate()

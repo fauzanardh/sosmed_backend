@@ -1,6 +1,15 @@
 import {User} from "../models/entity/User";
 import {Post} from "../models/entity/Post";
 import {Reply} from "../models/entity/Reply";
+import {Notification} from "../models/entity/Notification";
+
+export const parseUserSimple = (user: User) => {
+    return {
+        uuid: user.uuid,
+        name: user.name,
+        profilePictureDataId: user.profilePictureDataId
+    }
+}
 
 export const parseFollow = (users: User[]) => {
     const returnVal = [];
@@ -49,6 +58,8 @@ export const parseReplies = (replies: Reply[]) => {
             dataId: reply.dataId,
             text: reply.text,
             likedBy: parseLikedBy(reply.likedBy),
+            createdAt: reply.createdAt,
+            updatedAt: reply.updatedAt,
         });
     });
     return returnVal;
@@ -62,8 +73,27 @@ export const parsePosts = (posts: Post[]) => {
             dataId: post.dataId,
             text: post.text,
             likedBy: parseLikedBy(post.likedBy),
-            replies: parseReplies(post.replies)
+            replies: parseReplies(post.replies),
+            createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
         });
+    });
+    return returnVal;
+}
+
+export const parseNotification = (notifications: Notification[]) => {
+    const returnVal = [];
+    notifications.forEach((notification: Notification) => {
+        returnVal.push({
+            uuid: notification.uuid,
+            from: parseUserSimple(notification.from),
+            type: notification.type,
+            message: notification.message,
+            uuidToData: notification.uuidToData,
+            isRead: notification.isRead,
+            createdAt: notification.createdAt,
+            updatedAt: notification.updatedAt,
+        })
     });
     return returnVal;
 }
