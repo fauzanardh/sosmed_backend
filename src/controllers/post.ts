@@ -1,12 +1,12 @@
 import {Request, Response} from "express";
 import {getConnection} from "../db/connection";
-import {api_error_code, http_status} from "../const/status";
+import {api_error_code, http_status, notification_type} from "../const/status";
 import {Post} from "../models/entity/Post";
 import {User} from "../models/entity/User";
 import {purgeReplyCache, purgePostCache, purgeNotificationCache} from "../utils/redis";
 import {parseReplies, parseLikedBy, parsePosts} from "../utils/models";
 import {handleErrors} from "../utils/errors";
-import {Notification, NotificationType} from "../models/entity/Notification";
+import {Notification} from "../models/entity/Notification";
 
 export const createPost = async (req: Request, res: Response) => {
     try {
@@ -185,7 +185,7 @@ export const likePost = async (req: Request, res: Response) => {
                         milliseconds: 25000
                     }
                 });
-                newNotification.type = NotificationType.PostLiked;
+                newNotification.type = notification_type.PostLiked;
                 newNotification.message = `Your post has been liked by ${user.name}`;
                 newNotification.uuidToData = post.uuid;
                 await notificationRepository.save(newNotification);

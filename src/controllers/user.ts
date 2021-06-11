@@ -2,12 +2,12 @@ import {Request, Response} from "express";
 import bcrypt from "bcrypt";
 import {User} from '../models/entity/User';
 import {getConnection} from "../db/connection";
-import {api_error_code, http_status, postgres_error_codes} from "../const/status";
+import {api_error_code, http_status, notification_type, postgres_error_codes} from "../const/status";
 import {ValidationError} from "class-validator";
 import {purgeNotificationCache, purgeUserCache} from "../utils/redis";
 import {parseFollow, parsePosts, parseUsers} from "../utils/models";
 import {handleErrors} from "../utils/errors";
-import {Notification, NotificationType} from "../models/entity/Notification";
+import {Notification} from "../models/entity/Notification";
 
 export const createUser = async (req: Request, res: Response) => {
     try {
@@ -273,7 +273,7 @@ export const followUser = async (req: Request, res: Response) => {
                     const newNotification = new Notification();
                     newNotification.from = userFrom;
                     newNotification.to = userTo;
-                    newNotification.type = NotificationType.NewFollower;
+                    newNotification.type = notification_type.NewFollower;
                     newNotification.message = `You have been followed by ${userFrom.name}`;
                     newNotification.uuidToData = userTo.uuid;
                     await notificationRepository.save(newNotification);

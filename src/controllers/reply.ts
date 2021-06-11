@@ -1,13 +1,13 @@
 import {Request, Response} from "express";
 import {getConnection} from "../db/connection";
-import {api_error_code, http_status} from "../const/status";
+import {api_error_code, http_status, notification_type} from "../const/status";
 import {Reply} from "../models/entity/Reply";
 import {Post} from "../models/entity/Post";
 import {User} from "../models/entity/User";
 import {purgeReplyCache, purgePostCache, purgeNotificationCache} from "../utils/redis";
 import {parseLikedBy} from "../utils/models";
 import {handleErrors} from "../utils/errors";
-import {Notification, NotificationType} from "../models/entity/Notification";
+import {Notification} from "../models/entity/Notification";
 
 export const createReply = async (req: Request, res: Response) => {
     try {
@@ -51,7 +51,7 @@ export const createReply = async (req: Request, res: Response) => {
                     milliseconds: 25000
                 }
             });
-            newNotification.type = NotificationType.NewReply;
+            newNotification.type = notification_type.NewReply;
             newNotification.message = `You have a new reply by ${user.name}`;
             newNotification.uuidToData = parent.uuid;
             await notificationRepository.save(newNotification);
@@ -152,7 +152,7 @@ export const likeReply = async (req: Request, res: Response) => {
                         milliseconds: 25000
                     }
                 });
-                newNotification.type = NotificationType.ReplyLiked;
+                newNotification.type = notification_type.ReplyLiked;
                 newNotification.message = `Your reply has been liked by ${user.name}`;
                 newNotification.uuidToData = reply.uuid;
                 await notificationRepository.save(newNotification);
