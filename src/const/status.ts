@@ -37,8 +37,16 @@ export const http_status = {
     no_content: 204,
 };
 
+export enum notification_type {
+    PostLiked,
+    NewReply,
+    ReplyLiked,
+    NewFollower
+}
+
 export default {
     api_error_code,
     postgres_error_codes,
-    http_status
+    http_status,
+    notification_type
 }
