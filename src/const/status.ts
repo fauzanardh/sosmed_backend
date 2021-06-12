@@ -1,14 +1,15 @@
-export const api_error_code = {
-    unknown_error: -1,
-    no_error: 0,
-    no_params: 1,
-    sql_error: 2,
-    redis_error: 3,
-    http_error: 4,
-    auth_error: 5,
-    validation_error: 6,
-    image_error: 7,
-};
+export enum api_error_code {
+    unknown_error = -1,
+    no_error,
+    no_params,
+    user_registered,
+    sql_error,
+    redis_error,
+    http_error,
+    auth_error,
+    validation_error,
+    image_error,
+}
 
 export const postgres_error_codes = {
     "08003": "connection_does_not_exist",

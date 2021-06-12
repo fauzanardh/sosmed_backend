@@ -2,8 +2,7 @@ import {Request, Response} from "express";
 import bcrypt from "bcrypt";
 import {User} from '../models/entity/User';
 import {getConnection} from "../db/connection";
-import {api_error_code, http_status, notification_type, postgres_error_codes} from "../const/status";
-import {ValidationError} from "class-validator";
+import {api_error_code, http_status, notification_type} from "../const/status";
 import {purgeNotificationCache, purgeUserCache} from "../utils/redis";
 import {parseFollow, parsePosts, parseUsers} from "../utils/models";
 import {handleErrors} from "../utils/errors";
@@ -12,50 +11,22 @@ import {Notification} from "../models/entity/Notification";
 export const createUser = async (req: Request, res: Response) => {
     try {
         if (req.body.name && req.body.username && req.body.password) {
-            try {
-                const repository = getConnection().getRepository(User);
-                const newUser = new User();
-                newUser.name = req.body.name;
-                newUser.username = req.body.username;
-                const salt = await bcrypt.genSalt(12);
-                newUser.password = await bcrypt.hash(req.body.password, salt);
-                await repository.save(newUser);
-                await purgeUserCache();
-                res.json({
-                    errorCode: api_error_code.no_error,
-                    message: "Successfully added a new user.",
-                    data: {
-                        id: newUser.uuid,
-                        name: newUser.username,
-                    },
-                });
-            } catch (e) {
-                if (e instanceof Array) {
-                    const constraints = [];
-                    e.forEach((_e) => {
-                        if (_e instanceof ValidationError) {
-                            constraints.push({property: _e.property, constraint: _e.constraints})
-                        }
-                    });
-                    res.status(http_status.bad).json({
-                        errorCode: api_error_code.validation_error,
-                        message: "Something went wrong when validating the input.",
-                        data: {
-                            errorName: "ValidationError",
-                            errorDetail: constraints
-                        }
-                    });
-                } else {
-                    res.status(http_status.error).json({
-                        errorCode: api_error_code.sql_error,
-                        message: "Something went wrong.",
-                        data: {
-                            errorName: e.name,
-                            errorDetail: postgres_error_codes[e.code] || e.detail || e.message || "Unknown errors"
-                        }
-                    });
-                }
-            }
+            const repository = getConnection().getRepository(User);
+            const newUser = new User();
+            newUser.name = req.body.name;
+            newUser.username = req.body.username;
+            const salt = await bcrypt.genSalt(12);
+            newUser.password = await bcrypt.hash(req.body.password, salt);
+            await repository.save(newUser);
+            await purgeUserCache();
+            res.json({
+                errorCode: api_error_code.no_error,
+                message: "Successfully added a new user.",
+                data: {
+                    id: newUser.uuid,
+                    name: newUser.username,
+                },
+            });
         } else {
             res.status(http_status.bad).json({
                 errorCode: api_error_code.no_params,

@@ -1,4 +1,4 @@
-import {EntityNotFoundError} from "typeorm";
+import {EntityNotFoundError, QueryFailedError} from "typeorm";
 import {api_error_code, http_status} from "../const/status";
 import {Response} from "express";
 import {ValidationError} from "class-validator";
@@ -23,6 +23,23 @@ export const handleErrors = (e, res: Response) => {
             message: "Requested entity not found.",
             data: {}
         });
+    } else if (e instanceof QueryFailedError) {
+        // @ts-ignore
+        if (e.detail.indexOf("username") > -1) {
+            res.status(http_status.bad).json({
+                errorCode: api_error_code.user_registered,
+                message: "Username already registered",
+                data: {
+                    username: e.parameters[1],
+                }
+            });
+        } else {
+            res.status(http_status.error).json({
+                errorCode: api_error_code.sql_error,
+                message: "Error when querying data.",
+                data: {}
+            });
+        }
     } else {
         res.status(http_status.error).json({
             errorCode: api_error_code.sql_error,
