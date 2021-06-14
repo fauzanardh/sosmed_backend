@@ -180,6 +180,7 @@ export const updateUser = async (req: Request, res: Response) => {
                 if (req.body.name) user.name = req.body.name;
                 if (req.body.email) user.email = req.body.email;
                 if (req.body.bio) user.bio = req.body.bio
+                if (req.body.profilePictureDataId) user.profilePictureDataId = req.body.profilePictureDataId;
                 if (req.body.newPassword) {
                     const salt = await bcrypt.genSalt(12);
                     user.password = await bcrypt.hash(req.body.newPassword, salt);
