@@ -75,7 +75,7 @@ export const getOwnUser = async (req: Request, res: Response) => {
         // @ts-ignore
         const uuid = req.user.uuid;
         const user = await repository.findOneOrFail({
-            relations: ["following", "followers", "posts", "posts.likedBy"],
+            relations: ["following", "followers"],
             where: {uuid: uuid},
             cache: {
                 id: `table_user_get_own_${uuid}`,
@@ -94,7 +94,6 @@ export const getOwnUser = async (req: Request, res: Response) => {
                 profilePictureDataId: user.profilePictureDataId,
                 followers: parseFollow(user.followers),
                 following: parseFollow(user.following),
-                posts: parsePosts(user.posts),
             }
         });
     } catch (e) {
@@ -184,29 +183,29 @@ export const updateUser = async (req: Request, res: Response) => {
                 if (req.body.newPassword) {
                     const salt = await bcrypt.genSalt(12);
                     user.password = await bcrypt.hash(req.body.newPassword, salt);
-                    await repository.save(user);
-                    await purgeUserCache();
-                    res.json({
-                        errorCode: api_error_code.no_error,
-                        message: "Updated successfully.",
-                        data: {
-                            id: user.uuid,
-                            name: user.name,
-                            username: user.username,
-                            bio: user.bio,
-                            profilePictureDataId: user.profilePictureDataId,
-                        }
-                    });
                 }
-            } else {
+                await repository.save(user);
+                await purgeUserCache();
                 res.json({
+                    errorCode: api_error_code.no_error,
+                    message: "Updated successfully.",
+                    data: {
+                        id: user.uuid,
+                        name: user.name,
+                        username: user.username,
+                        bio: user.bio,
+                        profilePictureDataId: user.profilePictureDataId,
+                    }
+                });
+            } else {
+                res.status(http_status.bad).json({
                     errorCode: api_error_code.auth_error,
                     message: "Wrong current password!",
                     data: {}
                 });
             }
         } else {
-            res.json({
+            res.status(http_status.bad).json({
                 errorCode: api_error_code.auth_error,
                 message: "Current password is not provided!",
                 data: {}

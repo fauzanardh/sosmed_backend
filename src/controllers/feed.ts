@@ -25,24 +25,34 @@ export const getFeed = async (req: Request, res: Response) => {
         me.following.forEach((user: User) => {
             where.push({author: {uuid: user.uuid}});
         });
-        const posts = await postRepository.find({
-            relations: ["author", "likedBy", "replies", "replies.author", "replies.likedBy"],
-            where: where,
-            order: {
-                createdAt: "DESC",
-            },
-            cache: {
-                id: `table_post_get_own_feed_${uuid}`,
-                milliseconds: 25000
-            }
-        });
-        res.json({
-            errorCode: api_error_code.no_error,
-            message: "Posts fetched successfully.",
-            data: {
-                posts: parsePosts(posts),
-            }
-        });
+        if (where.length === 0) {
+            res.json({
+                errorCode: api_error_code.no_error,
+                message: "Posts fetched successfully.",
+                data: {
+                    posts: [],
+                }
+            });
+        } else {
+            const posts = await postRepository.find({
+                relations: ["author", "likedBy", "replies", "replies.author", "replies.likedBy"],
+                where: where,
+                order: {
+                    createdAt: "DESC",
+                },
+                cache: {
+                    id: `table_post_get_own_feed_${uuid}`,
+                    milliseconds: 25000
+                }
+            });
+            res.json({
+                errorCode: api_error_code.no_error,
+                message: "Posts fetched successfully.",
+                data: {
+                    posts: parsePosts(posts),
+                }
+            });
+        }
     } catch (e) {
         handleErrors(e, res);
     }
