@@ -132,12 +132,49 @@ export const getUserByUUID = async (req: Request, res: Response) => {
     }
 }
 
+export const getUserByUsername = async (req: Request, res: Response) => {
+    try {
+        const repository = getConnection().getRepository(User);
+        const user = await repository.findOneOrFail({
+            relations: ["following", "followers"],
+            where: {username: req.params.username},
+            cache: {
+                id: `table_user_get_username_${req.params.username}`,
+                milliseconds: 25000
+            }
+        });
+        res.json({
+            errorCode: api_error_code.no_error,
+            message: "User fetched successfully.",
+            data: {
+                id: user.uuid,
+                name: user.name,
+                username: user.username,
+                bio: user.bio,
+                profilePictureDataId: user.profilePictureDataId,
+                followers: parseFollow(user.followers),
+                following: parseFollow(user.following),
+                posts: parsePosts(user.posts),
+            }
+        });
+    } catch (e) {
+        handleErrors(e, res);
+    }
+}
+
 export const updateUser = async (req: Request, res: Response) => {
     try {
         const repository = getConnection().getRepository(User);
         // ignoring the error here since the typing doesn't work
         // @ts-ignore
-        const user = await repository.findOneOrFail({uuid: req.user.uuid});
+        const uuid = req.user.uuid;
+        const user = await repository.findOneOrFail({
+            where: {uuid: uuid},
+            cache: {
+                id: `table_user_get_uuid_${uuid}`,
+                milliseconds: 25000
+            },
+        });
         if (req.body.currentPassword) {
             const isPasswordValid = await bcrypt.compare(req.body.currentPassword, user.password);
             if (isPasswordValid) {

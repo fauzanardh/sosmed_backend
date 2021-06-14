@@ -7,6 +7,7 @@ export const parseUserSimple = (user: User) => {
     return {
         uuid: user.uuid,
         name: user.name,
+        username: user.username,
         profilePictureDataId: user.profilePictureDataId
     }
 }
@@ -54,8 +55,8 @@ export const parseReplies = (replies: Reply[]) => {
     replies.forEach((reply: Reply) => {
         returnVal.push({
             id: reply.uuid,
-            parentId: reply.parent.uuid,
             dataId: reply.dataId,
+            author: parseUserSimple(reply.author),
             text: reply.text,
             likedBy: parseLikedBy(reply.likedBy),
             createdAt: reply.createdAt,
@@ -70,6 +71,7 @@ export const parsePosts = (posts: Post[]) => {
     posts.forEach((post: Post) => {
         returnVal.push({
             id: post.uuid,
+            author: parseUserSimple(post.author),
             dataId: post.dataId,
             text: post.text,
             likedBy: parseLikedBy(post.likedBy),

@@ -68,8 +68,11 @@ export const getOwnPosts = async (req: Request, res: Response) => {
         // @ts-ignore
         const uuid = req.user.uuid;
         const posts = await repository.find({
-            relations: ["author", "likedBy", "replies", "replies.parent", "replies.likedBy"],
+            relations: ["author", "likedBy", "replies", "replies.author", "replies.likedBy"],
             where: {author: {uuid: uuid}},
+            order: {
+                createdAt: "DESC",
+            },
             take: limit,
             skip: page * limit,
             cache: {
@@ -96,8 +99,11 @@ export const getPostsByUserUUID = async (req: Request, res: Response) => {
         const limit = Math.min((req.query.limit) ? parseInt(req.query.limit as string, 10) : 25, 100)
         const page = (req.query.page) ? parseInt(req.query.page as string, 10) : 0;
         const posts = await repository.find({
-            relations: ["author", "likedBy", "replies", "replies.parent", "replies.likedBy"],
+            relations: ["author", "likedBy", "replies", "replies.author", "replies.likedBy"],
             where: {author: {uuid: req.params.uuid}},
+            order: {
+                createdAt: "DESC",
+            },
             take: limit,
             skip: page * limit,
             cache: {
@@ -117,12 +123,46 @@ export const getPostsByUserUUID = async (req: Request, res: Response) => {
     }
 }
 
+export const getPostsByUsername = async (req: Request, res: Response) => {
+    try {
+        const repository = getConnection().getRepository(Post);
+        // default 25, max 100
+        const limit = Math.min((req.query.limit) ? parseInt(req.query.limit as string, 10) : 25, 100)
+        const page = (req.query.page) ? parseInt(req.query.page as string, 10) : 0;
+        const posts = await repository.find({
+            relations: ["author", "likedBy", "replies", "replies.author", "replies.likedBy"],
+            where: {author: {username: req.params.username}},
+            order: {
+                createdAt: "DESC",
+            },
+            take: limit,
+            skip: page * limit,
+            cache: {
+                id: `table_post_get_user_username_${req.params.username}`,
+                milliseconds: 25000
+            }
+        });
+        res.json({
+            errorCode: api_error_code.no_error,
+            message: "Posts fetched successfully.",
+            data: {
+                posts: parsePosts(posts),
+            }
+        });
+    } catch (e) {
+        handleErrors(e, res);
+    }
+}
+
 export const getPostByUUID = async (req: Request, res: Response) => {
     try {
         const repository = getConnection().getRepository(Post);
         const post = await repository.findOneOrFail({
-            relations: ["author", "likedBy", "replies", "replies.parent", "replies.likedBy"],
+            relations: ["author", "likedBy", "replies", "replies.author", "replies.likedBy"],
             where: {uuid: req.params.uuid},
+            order: {
+                createdAt: "DESC",
+            },
             cache: {
                 id: `table_post_get_uuid_${req.params.uuid}`,
                 milliseconds: 25000
@@ -159,7 +199,7 @@ export const likePost = async (req: Request, res: Response) => {
             }
         });
         const post = await postRepository.findOneOrFail({
-            relations: ["author", "likedBy", "replies"],
+            relations: ["author", "likedBy", "replies", "replies.author", "replies.likedBy"],
             where: {uuid: req.params.uuid},
             cache: {
                 id: `table_post_get_uuid_${req.params.uuid}`,
@@ -230,7 +270,7 @@ export const deletePost = async (req: Request, res: Response) => {
     try {
         const repository = getConnection().getRepository(Post);
         const post = await repository.findOneOrFail({
-            relations: ["author"],
+            relations: ["author", "likedBy", "replies", "replies.author", "replies.likedBy"],
             where: {uuid: req.params.uuid},
             cache: {
                 id: `table_post_get_uuid_${req.params.uuid}`,

@@ -90,6 +90,9 @@ export const getReplyByUUID = async (req: Request, res: Response) => {
         const reply = await repository.findOneOrFail({
             relations: ["author", "likedBy", "parent"],
             where: {uuid: req.params.uuid},
+            order: {
+                createdAt: "DESC",
+            },
             cache: {
                 id: `table_reply_get_uuid_${req.params.uuid}`,
                 milliseconds: 25000

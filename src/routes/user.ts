@@ -8,7 +8,7 @@ import {
     updateUser,
     deleteUser,
     getOwnUser,
-    followUser
+    followUser, getUserByUsername
 } from "../controllers/user";
 
 const router = Router();
@@ -20,7 +20,8 @@ router.get(
     handleJWTError,
     getOwnUser
 );
-router.get('/:uuid', getUserByUUID);
+router.get('/uuid/:uuid', getUserByUUID);
+router.get('/username/:username', getUserByUsername);
 router.post('/', createUser);
 router.patch(
     '/',

@@ -1,7 +1,15 @@
 import {Router} from "express";
 import jwt from "express-jwt";
 import {handleJWTError} from "../middlewares/jwt";
-import {createPost, getOwnPosts, getPostsByUserUUID, getPostByUUID, likePost, deletePost} from "../controllers/post";
+import {
+    createPost,
+    getOwnPosts,
+    getPostsByUserUUID,
+    getPostByUUID,
+    likePost,
+    deletePost,
+    getPostsByUsername
+} from "../controllers/post";
 
 const router = Router();
 
@@ -12,6 +20,7 @@ router.get(
     getOwnPosts,
 );
 router.get('/userId/:uuid', getPostsByUserUUID);
+router.get('/username/:username', getPostsByUsername);
 router.get('/postId/:uuid', getPostByUUID);
 
 router.post(
