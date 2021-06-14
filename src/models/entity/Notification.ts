@@ -6,7 +6,8 @@ import {
     UpdateDateColumn,
     BaseEntity,
     BeforeInsert,
-    BeforeUpdate, OneToOne,
+    BeforeUpdate,
+    ManyToMany,
 } from "typeorm";
 import {validateOrReject, IsDefined, IsUUID} from 'class-validator';
 import {User} from "./User";
@@ -19,12 +20,12 @@ export class Notification extends BaseEntity {
     @PrimaryGeneratedColumn("uuid")
     uuid: string;
 
-    @OneToOne(() => User)
+    @ManyToMany(() => User)
     @JoinColumn()
     @IsDefined()
     from: User;
 
-    @OneToOne(() => User)
+    @ManyToMany(() => User)
     @JoinColumn()
     @IsDefined()
     to: User;
