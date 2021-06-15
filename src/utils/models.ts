@@ -18,6 +18,7 @@ export const parseFollow = (users: User[]) => {
         returnVal.push({
             id: _follow.uuid,
             name: _follow.name,
+            username: _follow.username,
         });
     });
     return returnVal;
