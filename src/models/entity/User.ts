@@ -12,6 +12,7 @@ import {
 import {validateOrReject, IsOptional, IsDefined, IsEmail, IsAlphanumeric} from 'class-validator';
 import {Reply} from "./Reply";
 import {Post} from "./Post";
+import {Notification} from "./Notification";
 
 @Entity()
 export class User extends BaseEntity {
@@ -64,6 +65,18 @@ export class User extends BaseEntity {
         (post: Post) => post.author
     )
     posts: Post[];
+
+    @OneToMany(
+        () => Notification,
+        (notification: Notification) => notification.to
+    )
+    recvNotifications: Notification[];
+
+    @OneToMany(
+        () => Notification,
+        (notification: Notification) => notification.to
+    )
+    sendNotifications: Notification[];
 
     @BeforeInsert()
     @BeforeUpdate()

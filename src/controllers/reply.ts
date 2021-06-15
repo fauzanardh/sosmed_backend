@@ -4,7 +4,7 @@ import {api_error_code, http_status, notification_type} from "../const/status";
 import {Reply} from "../models/entity/Reply";
 import {Post} from "../models/entity/Post";
 import {User} from "../models/entity/User";
-import {purgeReplyCache, purgePostCache, purgeNotificationCache} from "../utils/redis";
+import {purgeReplyCache, purgePostCache, purgeNotificationCache, purgeUserCache} from "../utils/redis";
 import {parseLikedBy} from "../utils/models";
 import {handleErrors} from "../utils/errors";
 import {Notification} from "../models/entity/Notification";
@@ -27,6 +27,7 @@ export const createReply = async (req: Request, res: Response) => {
             // @ts-ignore
             const userId = req.user.uuid
             const user = await userRepository.findOneOrFail({
+                relations: ["sendNotifications", "recvNotifications"],
                 where: {uuid: userId},
                 cache: {
                     id: `table_user_get_own_${userId}`,
@@ -43,19 +44,26 @@ export const createReply = async (req: Request, res: Response) => {
             await purgePostCache();
             const notificationRepository = getConnection().getRepository(Notification);
             const newNotification = new Notification();
-            newNotification.from = user;
-            newNotification.to = await userRepository.findOneOrFail({
-                where: {uuid: parent.author.uuid},
+            const userTo = await userRepository.findOneOrFail({
+                relations: ["sendNotifications", "recvNotifications"],
+                where: {uuid: newReply.author.uuid},
                 cache: {
-                    id: `table_user_get_uuid_${parent.author.uuid}`,
+                    id: `table_user_get_uuid_${newReply.author.uuid}`,
                     milliseconds: 25000
                 }
             });
+            newNotification.to = userTo;
+            newNotification.from = user;
             newNotification.type = notification_type.NewReply;
-            newNotification.message = `You have a new reply by ${user.name}`;
-            newNotification.uuidToData = parent.uuid;
+            newNotification.message = `${user.name} replied to your post`;
+            newNotification.uri = `/posts/${newReply.parent.uuid}`;
             await notificationRepository.save(newNotification);
+            user.sendNotifications.push(newNotification);
+            userTo.recvNotifications.push(newNotification);
+            await userRepository.save(user);
+            await userRepository.save(userTo);
             await purgeNotificationCache();
+            await purgeUserCache();
             res.json({
                 errorCode: api_error_code.no_error,
                 message: "Successfully added a new reply.",
@@ -122,6 +130,7 @@ export const likeReply = async (req: Request, res: Response) => {
         // @ts-ignore
         const uuid = req.user.uuid;
         const user = await userRepository.findOneOrFail({
+            relations: ["sendNotifications", "recvNotifications"],
             where: {uuid: uuid},
             cache: {
                 id: `table_user_get_uuid_${uuid}`,
@@ -147,19 +156,26 @@ export const likeReply = async (req: Request, res: Response) => {
                 await purgePostCache();
                 const notificationRepository = getConnection().getRepository(Notification);
                 const newNotification = new Notification();
-                newNotification.from = user;
-                newNotification.to = await userRepository.findOneOrFail({
-                    where: {uuid: req.params.uuid},
+                const userTo = await userRepository.findOneOrFail({
+                    relations: ["sendNotifications", "recvNotifications"],
+                    where: {uuid: reply.author.uuid},
                     cache: {
-                        id: `table_user_get_uuid_${req.params.uuid}`,
+                        id: `table_user_get_uuid_${reply.author.uuid}`,
                         milliseconds: 25000
                     }
                 });
+                newNotification.to = userTo;
+                newNotification.from = user;
                 newNotification.type = notification_type.ReplyLiked;
                 newNotification.message = `Your reply has been liked by ${user.name}`;
-                newNotification.uuidToData = reply.uuid;
+                newNotification.uri = `/posts/${reply.parent.uuid}`;
                 await notificationRepository.save(newNotification);
+                user.sendNotifications.push(newNotification);
+                userTo.recvNotifications.push(newNotification);
+                await userRepository.save(user);
+                await userRepository.save(userTo);
                 await purgeNotificationCache();
+                await purgeUserCache();
                 res.json({
                     errorCode: api_error_code.no_error,
                     message: "Liked successfully.",

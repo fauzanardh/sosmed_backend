@@ -105,7 +105,16 @@ export const getUserByUUID = async (req: Request, res: Response) => {
     try {
         const repository = getConnection().getRepository(User);
         const user = await repository.findOneOrFail({
-            relations: ["following", "followers"],
+            relations: [
+                "following",
+                "followers",
+                "posts",
+                "posts.author",
+                "posts.likedBy",
+                "posts.replies",
+                "posts.replies.author",
+                "posts.replies.likedBy",
+            ],
             where: {uuid: req.params.uuid},
             cache: {
                 id: `table_user_get_uuid_${req.params.uuid}`,
@@ -135,13 +144,23 @@ export const getUserByUsername = async (req: Request, res: Response) => {
     try {
         const repository = getConnection().getRepository(User);
         const user = await repository.findOneOrFail({
-            relations: ["following", "followers"],
+            relations: [
+                "following",
+                "followers",
+                "posts",
+                "posts.author",
+                "posts.likedBy",
+                "posts.replies",
+                "posts.replies.author",
+                "posts.replies.likedBy",
+            ],
             where: {username: req.params.username},
             cache: {
                 id: `table_user_get_username_${req.params.username}`,
                 milliseconds: 25000
             }
         });
+        // console.log(user.posts);
         res.json({
             errorCode: api_error_code.no_error,
             message: "User fetched successfully.",
@@ -279,13 +298,18 @@ export const followUser = async (req: Request, res: Response) => {
                     await purgeUserCache();
                     const notificationRepository = getConnection().getRepository(Notification);
                     const newNotification = new Notification();
-                    newNotification.from = userFrom;
                     newNotification.to = userTo;
+                    newNotification.from = userFrom;
                     newNotification.type = notification_type.NewFollower;
-                    newNotification.message = `You have been followed by ${userFrom.name}`;
-                    newNotification.uuidToData = userTo.uuid;
+                    newNotification.message = `${userFrom.name} followed you`;
+                    newNotification.uri = `/users/${userFrom.username}`;
                     await notificationRepository.save(newNotification);
+                    userFrom.sendNotifications.push(newNotification);
+                    userTo.recvNotifications.push(newNotification);
+                    await repository.save(userFrom);
+                    await repository.save(userTo);
                     await purgeNotificationCache();
+                    await purgeUserCache();
                     res.json({
                         errorCode: api_error_code.no_error,
                         message: "User successfully followed.",
@@ -305,7 +329,6 @@ export const followUser = async (req: Request, res: Response) => {
                 const indexTo = userTo.followers.map((_u: User) => {
                     return _u.uuid
                 }).indexOf(userFrom.uuid);
-                console.log(indexFrom, indexTo);
                 if (indexFrom !== -1 && indexTo !== -1) {
                     userFrom.following.splice(indexFrom, 1);
                     userTo.followers.splice(indexTo, 1);

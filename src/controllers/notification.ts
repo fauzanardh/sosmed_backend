@@ -40,7 +40,10 @@ export const read = async (req: Request, res: Response) => {
         // @ts-ignore
         const uuid = req.user.uuid;
         const notification = await repository.findOneOrFail({
-            relations: ["from", "to"],
+            relations: [
+                "from",
+                "to",
+            ],
             where: {
                 uuid: req.params.uuid,
                 to: {uuid: uuid},

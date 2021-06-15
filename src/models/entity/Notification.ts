@@ -7,12 +7,12 @@ import {
     BaseEntity,
     BeforeInsert,
     BeforeUpdate,
-    ManyToMany,
+    ManyToOne,
 } from "typeorm";
-import {validateOrReject, IsDefined, IsUUID} from 'class-validator';
+import {validateOrReject, IsDefined} from 'class-validator';
 import {User} from "./User";
 import {JoinColumn} from "typeorm";
-import { notification_type } from "../../const/status";
+import {notification_type} from "../../const/status";
 
 @Entity()
 export class Notification extends BaseEntity {
@@ -20,15 +20,23 @@ export class Notification extends BaseEntity {
     @PrimaryGeneratedColumn("uuid")
     uuid: string;
 
-    @ManyToMany(() => User)
-    @JoinColumn()
-    @IsDefined()
-    from: User;
-
-    @ManyToMany(() => User)
+    @ManyToOne(
+        () => User,
+        (user: User) => user.recvNotifications,
+        {nullable: false}
+    )
     @JoinColumn()
     @IsDefined()
     to: User;
+
+    @ManyToOne(
+        () => User,
+        (user: User) => user.sendNotifications,
+        {nullable: false}
+    )
+    @JoinColumn()
+    @IsDefined()
+    from: User;
 
     @Column('int')
     @IsDefined()
@@ -39,9 +47,8 @@ export class Notification extends BaseEntity {
     message: string;
 
     @Column()
-    @IsUUID()
     @IsDefined()
-    uuidToData: string;
+    uri: string;
 
     @Column({default: false})
     isRead: boolean;

@@ -88,10 +88,11 @@ export const parseNotification = (notifications: Notification[]) => {
     notifications.forEach((notification: Notification) => {
         returnVal.push({
             uuid: notification.uuid,
+            to: parseUserSimple(notification.to),
             from: parseUserSimple(notification.from),
             type: notification.type,
             message: notification.message,
-            uuidToData: notification.uuidToData,
+            uri: notification.uri,
             isRead: notification.isRead,
             createdAt: notification.createdAt,
             updatedAt: notification.updatedAt,

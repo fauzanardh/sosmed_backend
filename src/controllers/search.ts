@@ -25,7 +25,15 @@ export const search = async (req: Request, res: Response) => {
                 regexResult = tagsRegex.exec(keyword);
                 if (regexResult) {
                     const _posts = await postRepository.find({
-                        relations: ["author", "likedBy", "replies", "replies.author", "replies.likedBy"],
+                        relations: [
+                            "author",
+                            "likedBy",
+                            "replies",
+                            "replies.author",
+                            "replies.likedBy",
+                            "sendNotifications",
+                            "recvNotifications"
+                        ],
                         where: [
                             {text: ILike(`%${regexResult.groups.tag}%`)}
                         ],

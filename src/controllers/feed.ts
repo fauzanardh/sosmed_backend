@@ -35,7 +35,15 @@ export const getFeed = async (req: Request, res: Response) => {
             });
         } else {
             const posts = await postRepository.find({
-                relations: ["author", "likedBy", "replies", "replies.author", "replies.likedBy"],
+                relations: [
+                    "author",
+                    "likedBy",
+                    "replies",
+                    "replies.author",
+                    "replies.likedBy",
+                    "sendNotifications",
+                    "recvNotifications"
+                ],
                 where: where,
                 order: {
                     createdAt: "DESC",

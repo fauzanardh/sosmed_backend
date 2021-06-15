@@ -3,7 +3,7 @@ import {getConnection} from "../db/connection";
 import {api_error_code, http_status, notification_type} from "../const/status";
 import {Post} from "../models/entity/Post";
 import {User} from "../models/entity/User";
-import {purgeReplyCache, purgePostCache, purgeNotificationCache} from "../utils/redis";
+import {purgeReplyCache, purgePostCache, purgeNotificationCache, purgeUserCache} from "../utils/redis";
 import {parseReplies, parseLikedBy, parsePosts} from "../utils/models";
 import {handleErrors} from "../utils/errors";
 import {Notification} from "../models/entity/Notification";
@@ -175,6 +175,7 @@ export const getPostByUUID = async (req: Request, res: Response) => {
                 postId: post.uuid,
                 dataId: post.dataId,
                 authorId: post.author.uuid,
+                text: post.text,
                 likedBy: parseLikedBy(post.likedBy),
                 replies: parseReplies(post.replies),
             }
@@ -192,6 +193,7 @@ export const likePost = async (req: Request, res: Response) => {
         // @ts-ignore
         const uuid = req.user.uuid;
         const user = await userRepository.findOneOrFail({
+            relations: ["sendNotifications", "recvNotifications"],
             where: {uuid: uuid},
             cache: {
                 id: `table_user_get_uuid_${uuid}`,
@@ -217,19 +219,26 @@ export const likePost = async (req: Request, res: Response) => {
                 await purgePostCache();
                 const notificationRepository = getConnection().getRepository(Notification);
                 const newNotification = new Notification();
-                newNotification.from = user;
-                newNotification.to = await userRepository.findOneOrFail({
-                    where: {uuid: req.params.uuid},
+                const userTo = await userRepository.findOneOrFail({
+                    relations: ["sendNotifications", "recvNotifications"],
+                    where: {uuid: post.author.uuid},
                     cache: {
-                        id: `table_user_get_uuid_${req.params.uuid}`,
+                        id: `table_user_get_uuid_${post.author.uuid}`,
                         milliseconds: 25000
                     }
                 });
+                newNotification.to = userTo;
+                newNotification.from = user;
                 newNotification.type = notification_type.PostLiked;
                 newNotification.message = `Your post has been liked by ${user.name}`;
-                newNotification.uuidToData = post.uuid;
+                newNotification.uri = `/posts/${post.uuid}`;
                 await notificationRepository.save(newNotification);
+                user.sendNotifications.push(newNotification);
+                userTo.recvNotifications.push(newNotification);
+                await userRepository.save(user);
+                await userRepository.save(userTo);
                 await purgeNotificationCache();
+                await purgeUserCache();
                 res.json({
                     errorCode: api_error_code.no_error,
                     message: "Liked successfully.",
