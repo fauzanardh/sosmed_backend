@@ -41,8 +41,6 @@ export const getFeed = async (req: Request, res: Response) => {
                     "replies",
                     "replies.author",
                     "replies.likedBy",
-                    "sendNotifications",
-                    "recvNotifications"
                 ],
                 where: where,
                 order: {

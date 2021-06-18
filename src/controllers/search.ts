@@ -31,7 +31,6 @@ export const search = async (req: Request, res: Response) => {
                             "replies",
                             "replies.author",
                             "replies.likedBy",
-                            "sendNotifications",
                             "recvNotifications"
                         ],
                         where: [

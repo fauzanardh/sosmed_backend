@@ -72,11 +72,11 @@ export class User extends BaseEntity {
     )
     recvNotifications: Notification[];
 
-    @OneToMany(
-        () => Notification,
-        (notification: Notification) => notification.to
-    )
-    sendNotifications: Notification[];
+    // @OneToMany(
+    //     () => Notification,
+    //     (notification: Notification) => notification.to
+    // )
+    // sendNotifications: Notification[];
 
     @BeforeInsert()
     @BeforeUpdate()

@@ -90,7 +90,7 @@ export const parseNotification = (notifications: Notification[]) => {
         returnVal.push({
             uuid: notification.uuid,
             to: parseUserSimple(notification.to),
-            from: parseUserSimple(notification.from),
+            // from: parseUserSimple(notification.from),
             type: notification.type,
             message: notification.message,
             uri: notification.uri,

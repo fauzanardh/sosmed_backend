@@ -276,7 +276,7 @@ export const followUser = async (req: Request, res: Response) => {
                 }
             });
             const userTo = await repository.findOneOrFail({
-                relations: ["following", "followers"],
+                relations: ["following", "followers", "recvNotifications"],
                 where: {uuid: req.params.uuid},
                 cache: {
                     id: `table_user_get_uuid_${req.params.uuid}`,
@@ -299,14 +299,14 @@ export const followUser = async (req: Request, res: Response) => {
                     const notificationRepository = getConnection().getRepository(Notification);
                     const newNotification = new Notification();
                     newNotification.to = userTo;
-                    newNotification.from = userFrom;
+                    // newNotification.from = userFrom;
                     newNotification.type = notification_type.NewFollower;
                     newNotification.message = `${userFrom.name} followed you`;
                     newNotification.uri = `/users/${userFrom.username}`;
                     await notificationRepository.save(newNotification);
-                    userFrom.sendNotifications.push(newNotification);
+                    // userFrom.sendNotifications.push(newNotification);
                     userTo.recvNotifications.push(newNotification);
-                    await repository.save(userFrom);
+                    // await repository.save(userFrom);
                     await repository.save(userTo);
                     await purgeNotificationCache();
                     await purgeUserCache();

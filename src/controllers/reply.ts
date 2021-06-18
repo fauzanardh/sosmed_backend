@@ -27,7 +27,7 @@ export const createReply = async (req: Request, res: Response) => {
             // @ts-ignore
             const userId = req.user.uuid
             const user = await userRepository.findOneOrFail({
-                relations: ["sendNotifications", "recvNotifications"],
+                relations: ["recvNotifications"],
                 where: {uuid: userId},
                 cache: {
                     id: `table_user_get_own_${userId}`,
@@ -45,7 +45,7 @@ export const createReply = async (req: Request, res: Response) => {
             const notificationRepository = getConnection().getRepository(Notification);
             const newNotification = new Notification();
             const userTo = await userRepository.findOneOrFail({
-                relations: ["sendNotifications", "recvNotifications"],
+                relations: ["recvNotifications"],
                 where: {uuid: newReply.author.uuid},
                 cache: {
                     id: `table_user_get_uuid_${newReply.author.uuid}`,
@@ -53,14 +53,14 @@ export const createReply = async (req: Request, res: Response) => {
                 }
             });
             newNotification.to = userTo;
-            newNotification.from = user;
+            // newNotification.from = user;
             newNotification.type = notification_type.NewReply;
             newNotification.message = `${user.name} replied to your post`;
             newNotification.uri = `/posts/${newReply.parent.uuid}`;
             await notificationRepository.save(newNotification);
-            user.sendNotifications.push(newNotification);
+            // user.sendNotifications.push(newNotification);
             userTo.recvNotifications.push(newNotification);
-            await userRepository.save(user);
+            // await userRepository.save(user);
             await userRepository.save(userTo);
             await purgeNotificationCache();
             await purgeUserCache();
@@ -130,7 +130,7 @@ export const likeReply = async (req: Request, res: Response) => {
         // @ts-ignore
         const uuid = req.user.uuid;
         const user = await userRepository.findOneOrFail({
-            relations: ["sendNotifications", "recvNotifications"],
+            relations: ["recvNotifications"],
             where: {uuid: uuid},
             cache: {
                 id: `table_user_get_uuid_${uuid}`,
@@ -157,7 +157,7 @@ export const likeReply = async (req: Request, res: Response) => {
                 const notificationRepository = getConnection().getRepository(Notification);
                 const newNotification = new Notification();
                 const userTo = await userRepository.findOneOrFail({
-                    relations: ["sendNotifications", "recvNotifications"],
+                    relations: ["recvNotifications"],
                     where: {uuid: reply.author.uuid},
                     cache: {
                         id: `table_user_get_uuid_${reply.author.uuid}`,
@@ -165,14 +165,14 @@ export const likeReply = async (req: Request, res: Response) => {
                     }
                 });
                 newNotification.to = userTo;
-                newNotification.from = user;
+                // newNotification.from = user;
                 newNotification.type = notification_type.ReplyLiked;
                 newNotification.message = `Your reply has been liked by ${user.name}`;
                 newNotification.uri = `/posts/${reply.parent.uuid}`;
                 await notificationRepository.save(newNotification);
-                user.sendNotifications.push(newNotification);
+                // user.sendNotifications.push(newNotification);
                 userTo.recvNotifications.push(newNotification);
-                await userRepository.save(user);
+                // await userRepository.save(user);
                 await userRepository.save(userTo);
                 await purgeNotificationCache();
                 await purgeUserCache();

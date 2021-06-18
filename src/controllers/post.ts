@@ -192,8 +192,8 @@ export const likePost = async (req: Request, res: Response) => {
         // ignoring the error here since the typing doesn't work
         // @ts-ignore
         const uuid = req.user.uuid;
-        const user = await userRepository.findOneOrFail({
-            relations: ["sendNotifications", "recvNotifications"],
+        const userFrom = await userRepository.findOneOrFail({
+            relations: ["following", "followers", "recvNotifications"],
             where: {uuid: uuid},
             cache: {
                 id: `table_user_get_uuid_${uuid}`,
@@ -210,17 +210,17 @@ export const likePost = async (req: Request, res: Response) => {
         });
         const index = post.likedBy.map((_u: User) => {
             return _u.uuid
-        }).indexOf(user.uuid);
+        }).indexOf(userFrom.uuid);
         if (req.body.likeStatus) {
             if (index === -1) {
-                post.likedBy.push(user);
+                post.likedBy.push(userFrom);
                 await postRepository.save(post);
                 await purgeReplyCache();
                 await purgePostCache();
                 const notificationRepository = getConnection().getRepository(Notification);
                 const newNotification = new Notification();
                 const userTo = await userRepository.findOneOrFail({
-                    relations: ["sendNotifications", "recvNotifications"],
+                    relations: ["following", "followers", "recvNotifications"],
                     where: {uuid: post.author.uuid},
                     cache: {
                         id: `table_user_get_uuid_${post.author.uuid}`,
@@ -228,14 +228,14 @@ export const likePost = async (req: Request, res: Response) => {
                     }
                 });
                 newNotification.to = userTo;
-                newNotification.from = user;
+                // newNotification.from = userFrom;
                 newNotification.type = notification_type.PostLiked;
-                newNotification.message = `Your post has been liked by ${user.name}`;
+                newNotification.message = `Your post has been liked by ${userFrom.name}`;
                 newNotification.uri = `/posts/${post.uuid}`;
                 await notificationRepository.save(newNotification);
-                user.sendNotifications.push(newNotification);
+                // userFrom.sendNotifications.push(newNotification);
                 userTo.recvNotifications.push(newNotification);
-                await userRepository.save(user);
+                // await userRepository.save(userFrom);
                 await userRepository.save(userTo);
                 await purgeNotificationCache();
                 await purgeUserCache();

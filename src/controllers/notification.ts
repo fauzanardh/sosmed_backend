@@ -13,7 +13,7 @@ export const getAll = async (req: Request, res: Response) => {
         // @ts-ignore
         const uuid = req.user.uuid;
         const notifications = await repository.find({
-            relations: ["from", "to"],
+            relations: ["to"],
             where: {
                 to: {uuid: uuid},
                 isRead: false,
@@ -41,7 +41,6 @@ export const read = async (req: Request, res: Response) => {
         const uuid = req.user.uuid;
         const notification = await repository.findOneOrFail({
             relations: [
-                "from",
                 "to",
             ],
             where: {

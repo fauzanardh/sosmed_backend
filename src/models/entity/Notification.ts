@@ -29,14 +29,14 @@ export class Notification extends BaseEntity {
     @IsDefined()
     to: User;
 
-    @ManyToOne(
-        () => User,
-        (user: User) => user.sendNotifications,
-        {nullable: false}
-    )
-    @JoinColumn()
-    @IsDefined()
-    from: User;
+    // @ManyToOne(
+    //     () => User,
+    //     (user: User) => user.sendNotifications,
+    //     {nullable: false}
+    // )
+    // @JoinColumn()
+    // @IsDefined()
+    // from: User;
 
     @Column('int')
     @IsDefined()
