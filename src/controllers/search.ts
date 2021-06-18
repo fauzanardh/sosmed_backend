@@ -30,8 +30,7 @@ export const search = async (req: Request, res: Response) => {
                             "likedBy",
                             "replies",
                             "replies.author",
-                            "replies.likedBy",
-                            "recvNotifications"
+                            "replies.likedBy"
                         ],
                         where: [
                             {text: ILike(`%${regexResult.groups.tag}%`)}
